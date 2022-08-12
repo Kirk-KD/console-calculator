@@ -1,0 +1,108 @@
+@font-face {
+    font-family: lm-math;
+    src: url("../font/latinmodern-math.otf");
+}
+
+.math {
+    font-family: lm-math;
+}
+
+.main-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.console-container {
+    display: flex;
+    align-items: flex-end;
+    flex-direction: column-reverse;
+
+    overflow-y: scroll;
+    scrollbar-width: 7px;
+    scrollbar-color: rgba(var(--default-border-color), 1) rgba(0, 0, 0, 0);
+
+    height: 80vh;
+    width: 45vw;
+    margin-bottom: 1.5vh;
+}
+
+.console-container::-webkit-scrollbar {
+    width: 7px;
+}
+
+.console-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0);
+}
+
+.console-container::-webkit-scrollbar-thumb {
+    background: rgba(var(--default-border-color), 1);
+    -webkit-border-radius: 5px;
+    border-radius: 5px;
+}
+
+.console-container .console-element {
+    width: 100%;
+}
+
+.console-container .console-element .original-command {
+    margin-bottom: 1%;
+    font-size: calc(11px + 0.2vw);
+    font-style: italic;
+    color: rgba(var(--light-text-color), 1);
+}
+
+.console-container .console-element .original-command .command-name {
+    font-weight: 600;
+    font-style: normal;
+    font-family: Inter, sans-serif;
+}
+
+.console-container .console-element .command-result {
+    font-size: calc(16px + 0.22vw);
+}
+
+.console-container .console-element hr {
+    height: 2px;
+}
+
+.command-input {
+    height: 5vh;
+    width: 45vw !important;
+    padding-left: 1.4rem !important;
+}
+
+.ac-suggestions {
+    position: absolute;
+    bottom: 7vh;
+    left: 10vw;
+    width: 16vw;
+
+    border: 2px solid rgba(var(--default-border-color), 1);
+    background-color: rgba(var(--main-bg), 1);
+
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.ac-suggestions .ac-suggestion-item {
+    margin: 3px;
+    padding-left: 0.1vw;
+    font-size: calc(10px + 0.2vw);
+}
+
+.ac-suggestions .ac-suggestion-item:hover {
+    background-color: rgba(var(--ligth-bg-color), 1);
+}
+
+.ac-suggestions #ac-suggestion-item-selected {
+    border: 1px solid rgba(82, 114, 204, 0.5);
+    margin: 2px;
+}
+
+.ac-suggestions .ac-suggestion-item .ac-args {
+    font-style: italic;
+    color: rgba(var(--light-text-color), 1);
+}
