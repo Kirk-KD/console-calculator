@@ -1,10 +1,10 @@
 @font-face {
-    font-family: lm-math;
-    src: url("../font/latinmodern-math.otf");
+    font-family: math-font;
+    src: url("../font/DejaVuMathTeXGyre-Regular 400.ttf");
 }
 
 .math {
-    font-family: lm-math;
+    font-family: math-font;
 }
 
 .main-container {
