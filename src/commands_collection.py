@@ -39,6 +39,9 @@ class CommandsCollection:
                     if len(names) == limit:
                         break
         return names
+    
+    def get_description(self, name: str):
+        return self.commands.get(name, {"desc": None})["desc"]
 
     def invoke_command(self, name: str, args: list):
         if name in self.commands.keys():

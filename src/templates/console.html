@@ -7,8 +7,10 @@
 {% block body %}
 <div class="main-container">
     <div class="ms-alert ms-border console-container"></div>
-    <input type="text" id="command-input" class="command-input" autofocus>
+    <input type="text" class="command-input" autofocus>
     <div class="ac-suggestions"></div>
+    <div class="command-description"></div>
+    <div class="ms-loading loading-indicator"></div>
 </div>
 
 <script>
@@ -18,6 +20,7 @@
         var acSelectionIndex = -1;
 
         $(".ac-suggestions").hide();
+        $(".loading-indicator").hide();
 
         function parseInput(input) {
             /* Parse console input into a command and arguments list. */
@@ -64,22 +67,37 @@
                     $(".ac-suggestions").html(makeAutocompleteItems(response)).show();
                     acSelectionIndex = Object.keys(response.commands).length - 1;
                     $(".ac-suggestions").children()[acSelectionIndex].id = "ac-suggestion-item-selected";
+                    updateDescription();
                 } else {
                     $(".ac-suggestions").hide();
+                    $(".command-description").html("");
                     acSelectionIndex = -1;
                 }
             });
         }
 
-        $("#command-input").on("input", e => {
+        function updateDescription() {
+            $.post({
+                url: "/description",
+                data: `{"name": "${
+                    $("#ac-suggestion-item-selected").attr("command-name")
+                }"}`,
+                contentType: "application/json;"
+            }).done(response => {
+                $(".command-description").html(response.description || "");
+            });
+        }
+
+        $(".command-input").on("input", e => {
             let {commandName, arguments} = parseInput(e.target.value);
             updateAutocomplete(commandName);
         }).on("keydown", e => {
             if (["Enter", "ArrowUp", "ArrowDown", "Tab"].indexOf(e.key) > -1) e.preventDefault();
             if (e.key === "Enter") {
-                if (e.target.value.trim().length > 0) {
+                if (e.target.value.trim().length > 0 && $(".loading-indicator").is(":hidden")) {
                     let commandData = JSON.stringify(parseInput(e.target.value));
 
+                    $(".loading-indicator").show();
                     $.post({
                         url: "/calculate",
                         data: commandData,
@@ -90,6 +108,8 @@
                         historyIndex = 0;
                         e.target.value = "";
                         $(".ac-suggestions").html("").hide();
+                        $(".command-description").html("");
+                        $(".loading-indicator").hide();
                         
                         $(".console-container").prepend(makeResultElement(response));
                     });
@@ -111,6 +131,7 @@
                 acSelectionIndex--;
                 if (acSelectionIndex < 0) acSelectionIndex = children.length - 1;
                 children[acSelectionIndex].id = "ac-suggestion-item-selected";
+                updateDescription();
             } else if (e.key == "ArrowDown" && acSelectionIndex !== -1) {
                 let children = $(".ac-suggestions").children();
                 children[acSelectionIndex].removeAttribute("id");
@@ -118,6 +139,7 @@
                 acSelectionIndex++;
                 if (acSelectionIndex >= children.length) acSelectionIndex = 0;
                 children[acSelectionIndex].id = "ac-suggestion-item-selected";
+                updateDescription();
             } else if (e.key == "Tab" && acSelectionIndex !== -1) {
                 let children = $(".ac-suggestions").children();
                 let commandName = children[acSelectionIndex].getAttribute("command-name");

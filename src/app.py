@@ -23,6 +23,14 @@ def calculate():
     }
 
 
+@app.route("/description", methods=["POST"])
+def description():
+    name = request.json["name"]
+    return {
+        "description": commands.get_description(name)
+    }
+
+
 @app.route("/search", methods=["POST"])
 def search():
     query = request.json["query"]

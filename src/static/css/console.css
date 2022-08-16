@@ -106,3 +106,18 @@
     font-style: italic;
     color: rgba(var(--light-text-color), 1);
 }
+
+.command-description {
+    margin-top: 1.5vh;
+    min-height: 2vh;
+    font-size: calc(12px + 0.2vw);
+}
+
+.loading-indicator {
+    position: absolute;
+    bottom: 9vh;
+    right: 25vw;
+
+    margin: 0 !important;
+    padding: 0 !important;
+}
