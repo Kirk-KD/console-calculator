@@ -68,10 +68,25 @@
     height: 2px;
 }
 
-.command-input {
+.command-input-container {
+    position: relative;
     height: 5vh;
-    width: 45vw !important;
+    width: 45vw;
+}
+
+.command-input-container .command-input {
+    height: 100%;
+    width: 100%;
     padding-left: 1.4rem !important;
+}
+
+.command-input-container .loading-indicator {
+    position: absolute;
+    right: -40px;
+    bottom: 1vh;
+
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 .ac-suggestions {
@@ -111,13 +126,4 @@
     margin-top: 1.5vh;
     min-height: 2vh;
     font-size: calc(12px + 0.2vw);
-}
-
-.loading-indicator {
-    position: absolute;
-    bottom: 9vh;
-    right: 25vw;
-
-    margin: 0 !important;
-    padding: 0 !important;
 }

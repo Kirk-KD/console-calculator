@@ -7,10 +7,12 @@
 {% block body %}
 <div class="main-container">
     <div class="ms-alert ms-border console-container"></div>
-    <input type="text" class="command-input" autofocus>
+    <div class="command-input-container">
+        <input type="text" class="command-input" autofocus>
+        <div class="ms-loading loading-indicator"></div>
+    </div>
     <div class="ac-suggestions"></div>
     <div class="command-description"></div>
-    <div class="ms-loading loading-indicator"></div>
 </div>
 
 <script>
