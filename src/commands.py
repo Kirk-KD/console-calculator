@@ -125,3 +125,37 @@ def is_prime(n):
         d = d + 2
     
     return f"{n} is not prime."
+
+
+@commands.command(
+    "Calculates the Greatest Common Factor of two numbers, a and b.",
+    {
+        "a": INT,
+        "b": INT
+    }
+)
+def gcd(a, b):
+    r = math.gcd(a, b)
+    return f"GCD of {a} and {b} = {r} ({a} {m('div')} {a // r}, {b} {m('div')} {b // r})"
+
+
+@commands.command(
+    "Calculates the Least Common Multiple of two numbers, a and b.",
+    {
+        "a": INT,
+        "b": INT
+    }
+)
+def lcm(a, b):
+    r = math.lcm(a, b)
+    return f"LCM of {a} and {b} = {r} ({a} {m('mul')} {r // a}, {b} {m('mul')} {r // b})"
+
+
+@commands.command(
+    "Calculates the area of a circle.",
+    {
+        "radius": REAL
+    }
+)
+def circle_area(r):
+    return f"Area of Cirle with radius of {r} = {r * r}{m('pi')} = {r * r * math.pi} unit{m('^2')}"
