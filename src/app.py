@@ -1,5 +1,8 @@
 from flask import Flask, render_template, request
 from commands import commands
+from evaluate import eval_math
+from utils import int_or_float
+from formatting import error
 
 app = Flask(__name__)
 
@@ -9,9 +12,26 @@ def index():
     return render_template("console.html")
 
 
+@app.route("/eval", methods=["POST"])
+def eval_():
+    expr = request.json["expr"]
+    try:
+        result, unparsed = eval_math(expr)
+        return {
+            "originalExpr": unparsed,
+            "result": int_or_float(result)
+        }
+    except ValueError:
+        return {
+            "originalExpr": expr,
+            "result": error("Invalid expression.")
+        }
+
+
 @app.route("/calculate", methods=["POST"])
 def calculate():
     json = request.json
+
     command_name = json["commandName"]
     command_arguments = json["arguments"]
 

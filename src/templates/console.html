@@ -21,27 +21,36 @@
         var historyIndex = 0;
         var acSelectionIndex = -1;
 
+        const IS_CMD_REGEX = /[a-z_]/i;
+
         $(".ac-suggestions").hide();
         $(".loading-indicator").hide();
 
         function parseInput(input) {
-            /* Parse console input into a command and arguments list. */
+            /*
+            Parse console input into a command and arguments list, or
+            into a math expression.
+            */
 
-            let inputSplit = input.trim().split(" ");
+            let inputSplit = input.trim().toLowerCase().split(" ");
 
             let command = inputSplit[0];
-            let argumentsText = inputSplit.length > 1 ?
-                                inputSplit.slice(1).join(" ") :
-                                "";
+            if (IS_CMD_REGEX.test(command)) {
+                let argumentsText = inputSplit.length > 1 ?
+                                    inputSplit.slice(1).join(" ") :
+                                    "";
 
-            let arguments = argumentsText.split(",")
-            for (let i = 0; i < arguments.length; i++)
-                arguments[i] = arguments[i].trim().toLowerCase();
+                let arguments = argumentsText.split(",")
+                for (let i = 0; i < arguments.length; i++)
+                    arguments[i] = arguments[i].trim();
 
-            return {commandName: command, arguments: arguments[0] == "" ? [] : arguments};
+                return {commandName: command, arguments: arguments[0] == "" ? [] : arguments};
+            } else {
+                return {expr: input};
+            }
         }
 
-        function makeResultElement(response) {
+        function makeCommandResultElement(response) {
             return `<div class="console-element">
                         <hr>
                         <div class="original-command math">
@@ -49,6 +58,14 @@
                         </div>
                         <span class="command-result math">${response.commandResult}</span>
                     </div>`;
+        }
+
+        function makeEvalResultElement(response) {
+            return `<div class="console-element">
+                        <hr>
+                        <div class="original-expr math">${response.originalExpr}</div>
+                        <span class="command-result math">${response.result}</span>
+                    </div>`
         }
 
         function makeAutocompleteItems(response) {
@@ -91,30 +108,52 @@
         }
 
         $(".command-input").on("input", e => {
-            let {commandName, arguments} = parseInput(e.target.value);
-            updateAutocomplete(commandName);
+            let result = parseInput(e.target.value);
+            if (result.expr === undefined) updateAutocomplete(result.commandName);
         }).on("keydown", e => {
             if (["Enter", "ArrowUp", "ArrowDown", "Tab"].indexOf(e.key) > -1) e.preventDefault();
             if (e.key === "Enter") {
                 if (e.target.value.trim().length > 0 && $(".loading-indicator").is(":hidden")) {
-                    let commandData = JSON.stringify(parseInput(e.target.value));
-
                     $(".loading-indicator").show();
-                    $.post({
-                        url: "/calculate",
-                        data: commandData,
-                        contentType: "application/json;"
-                    }).done(response => {
+                    let result = parseInput(e.target.value);
+
+                    function afterRequest() {
                         commandHistory.push(e.target.value);
-                        
+
                         historyIndex = 0;
                         e.target.value = "";
+
                         $(".ac-suggestions").html("").hide();
                         $(".command-description").html("");
                         $(".loading-indicator").hide();
-                        
-                        $(".console-container").prepend(makeResultElement(response));
-                    });
+                    }
+
+                    if (result.expr === undefined) {
+                        let commandData = JSON.stringify({
+                            commandName: result.commandName,
+                            arguments: result.arguments
+                        });
+
+                        $.post({
+                            url: "/calculate",
+                            data: commandData,
+                            contentType: "application/json;"
+                        }).done(response => {
+                            $(".console-container").prepend(makeCommandResultElement(response));
+                            afterRequest();
+                        });
+                    } else {
+                        let exprData = JSON.stringify(result);
+
+                        $.post({
+                            url: "/eval",
+                            data: exprData,
+                            contentType: "application/json;"
+                        }).done(response => {
+                            $(".console-container").prepend(makeEvalResultElement(response));
+                            afterRequest();
+                        });
+                    }
                 }
             } else if (e.ctrlKey && e.key === "ArrowUp") {
                 if (commandHistory.length > 0 && commandHistory.length + historyIndex - 1 >= 0) {

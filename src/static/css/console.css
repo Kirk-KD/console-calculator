@@ -54,6 +54,12 @@
     color: rgba(var(--light-text-color), 1);
 }
 
+.console-container .console-element .original-expr {
+    margin-bottom: 1%;
+    font-size: calc(11px + 0.2vw);
+    color: rgba(var(--light-text-color), 1);
+}
+
 .console-container .console-element .original-command .command-name {
     font-weight: 600;
     font-style: normal;
