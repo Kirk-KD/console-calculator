@@ -105,7 +105,8 @@ def simplify_square_root(r):
         return (1, num)
 
     coef, rad = simpl_sqrt(r)
-    return f"{m('sqrt')}{radical(r)} = {coef}{m('sqrt')}{radical(rad)}"
+    return f"{m('sqrt')}{radical(r)} = {coef}" + \
+        (f" {m('sqrt')}{radical(rad)}" if rad != 1 else "")
 
 
 @commands.command(
