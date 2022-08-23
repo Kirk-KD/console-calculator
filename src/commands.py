@@ -117,12 +117,12 @@ def simplify_square_root(r):
 )
 def is_prime(n):
     if n & 1 == 0:
-        return f"{n} is not prime. (example: 2 and {n // 2})"
+        return f"{n} is not prime. (example: 2 {m('mul')} {n // 2})"
 
     d = 3
     while d * d <= n:
         if n % d == 0:
-            return f"{n} is not prime. (example: {d} and {n // d})"
+            return f"{n} is not prime. (example: {d} {m('mul')} {n // d})"
         d = d + 2
     
     return f"{n} is prime."

@@ -21,10 +21,15 @@ def eval_():
             "originalExpr": unparsed,
             "result": int_or_float(result)
         }
-    except ValueError:
+    except (ValueError, SyntaxError):
         return {
             "originalExpr": expr,
-            "result": error("Invalid expression.")
+            "result": error("Invalid math expression.")
+        }
+    except ZeroDivisionError:
+        return {
+            "originalExpr": expr,
+            "result": error("Cannot divide by zero.")
         }
 
 
