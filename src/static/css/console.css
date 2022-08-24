@@ -45,6 +45,12 @@
 
 .console-container .console-element {
     width: 100%;
+    overflow-x: hidden;
+}
+
+.console-container .console-element .only-text {
+    font-size: calc(12px + 0.2vw);
+    overflow-y: hidden;
 }
 
 .console-container .console-element .original-command {
@@ -52,6 +58,7 @@
     font-size: calc(11px + 0.2vw);
     font-style: italic;
     color: rgba(var(--light-text-color), 1);
+    flex-grow: 2;
 }
 
 .console-container .console-element .original-expr {

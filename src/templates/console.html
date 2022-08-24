@@ -6,7 +6,15 @@
 
 {% block body %}
 <div class="main-container">
-    <div class="ms-alert ms-border console-container"></div>
+    <div class="ms-alert ms-border console-container">
+        <div class="console-element">
+            <div class="only-text">
+                <hr>
+                Enter a math expression or a command and press <code>Enter</code>.
+                Type <code>help</code> to get a list of commands.
+            </div>
+        </div>
+    </div>
     <div class="command-input-container">
         <input type="text" class="command-input" autofocus>
         <div class="ms-loading loading-indicator"></div>
