@@ -16,7 +16,11 @@ commands = CommandsCollection()
     }
 )
 def quadratic_roots(a, b, c):
-    r = math.sqrt(abs(b**2 - 4 * a * c))
+    d = b**2 - 4 * a * c
+    if d < 0:
+        return f"x = no solution"
+
+    r = math.sqrt(d)
     return f"x = {solution_set([(-b + r) / (2 * a), (-b - r) / (2 * a)])}"
 
 
