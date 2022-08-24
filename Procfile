@@ -1,1 +1,1 @@
-web: gunicorn 'src.app:main()'
+web: gunicorn --pythonpath ConsoleCalculator 'src.app:main()'
