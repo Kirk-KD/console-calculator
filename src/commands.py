@@ -128,28 +128,32 @@ def is_prime(n):
     return f"{n} is prime."
 
 
-@commands.command(
-    "Calculates the Greatest Common Factor of two numbers, a and b.",
-    {
-        "a": INT,
-        "b": INT
-    }
+@commands.arg_list_command(
+    "Calculates the Greatest Common Divisor of a list of integers.",
+    "integers...",
+    INT
 )
-def gcd(a, b):
-    r = math.gcd(a, b)
-    return f"GCD of {a} and {b} = {r} ({a} {m('div')} {a // r}, {b} {m('div')} {b // r})"
+def gcd(*integers):
+    r = math.gcd(*integers)
+    result = f"GCD of {', '.join([str(i) for i in integers])} = {int(r)} ("
+    examples = []
+    for i in integers:
+        examples.append(f"{i} {m('div')} {i // r}")
+    return result + ", ".join(examples) + ")"
 
 
-@commands.command(
-    "Calculates the Least Common Multiple of two numbers, a and b.",
-    {
-        "a": INT,
-        "b": INT
-    }
+@commands.arg_list_command(
+    "Calculates the Least Common Multiple of a list of integers.",
+    "integers...",
+    INT
 )
-def lcm(a, b):
-    r = math.lcm(a, b)
-    return f"LCM of {a} and {b} = {r} ({a} {m('mul')} {r // a}, {b} {m('mul')} {r // b})"
+def lcm(*integers):
+    r = math.lcm(*integers)
+    result = f"LCM of {', '.join([str(i) for i in integers])} = {int(r)} ("
+    examples = []
+    for i in integers:
+        examples.append(f"{i} {m('mul')} {r // i}")
+    return result + ", ".join(examples) + ")"
 
 
 @commands.command(
