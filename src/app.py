@@ -66,9 +66,4 @@ def search():
     }
 
 
-def main():
-    app.run(host="127.0.0.1", port=50, threaded=True)
-
-
-if __name__ == "__main__":
-    main()
+app.run(host="127.0.0.1", port=50, threaded=True)
