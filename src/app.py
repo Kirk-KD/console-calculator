@@ -71,4 +71,4 @@ def search():
 #     port = int(os.environ.get("PORT", "17995"))
 # else:
 #     port = 3000
-app.run(threaded=True)
+app.run(host="0.0.0.0", port=443, threaded=True)
