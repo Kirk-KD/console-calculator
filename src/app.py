@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template, request
 from commands import commands
 from evaluate import eval_math
@@ -65,5 +66,9 @@ def search():
         "commands": results
     }
 
-
-app.run(host="0.0.0.0", port=3000, threaded=True)
+HEROKU = os.environ.get("HEROKU")
+if HEROKU:
+    port = int(os.environ.get("PORT", "17995"))
+else:
+    port = 3000
+app.run(host="0.0.0.0", port=port, threaded=True)
