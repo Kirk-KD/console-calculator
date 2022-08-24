@@ -66,9 +66,9 @@ def search():
         "commands": results
     }
 
-HEROKU = os.environ.get("HEROKU")
-if HEROKU:
-    port = int(os.environ.get("PORT", "17995"))
-else:
-    port = 3000
-app.run(host="0.0.0.0", port=port, threaded=True)
+# HEROKU = os.environ.get("HEROKU")
+# if HEROKU:
+#     port = int(os.environ.get("PORT", "17995"))
+# else:
+#     port = 3000
+app.run(threaded=True)
