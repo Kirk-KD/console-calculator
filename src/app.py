@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template, request
 from commands import commands
 from evaluate import eval_math
@@ -65,4 +66,7 @@ def search():
         "commands": results
     }
 
-app.run(host="0.0.0.0", port=443)
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port, debug=True)
