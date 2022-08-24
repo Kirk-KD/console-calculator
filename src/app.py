@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request
 from commands import commands
 from evaluate import eval_math
-from utils import int_or_float
+from utils import iof
 from formatting import error
 
 app = Flask(__name__)
@@ -19,7 +19,7 @@ def eval_():
         result, unparsed = eval_math(expr)
         return {
             "originalExpr": unparsed,
-            "result": int_or_float(result)
+            "result": iof(result)
         }
     except (ValueError, SyntaxError):
         return {

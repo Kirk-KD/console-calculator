@@ -1,6 +1,7 @@
 import math
 from commands_collection import CommandsCollection, REAL, INT, STRING
 from formatting import *
+from utils import iof
 
 commands = CommandsCollection()
 
@@ -164,3 +165,17 @@ def lcm(*integers):
 )
 def circle_area(r):
     return f"Area of Cirle with radius of {r} = {r * r}{m('pi')} = {r * r * math.pi} unit{m('^2')}"
+
+
+@commands.command(
+    "Calculates the length of a line segment from (x{_1}, y{_1} to (x{_2}, y{_2}).",
+    {
+        "x{_1}": REAL,
+        "y{_1}": REAL,
+        "x{_2}": REAL,
+        "y{_2}": REAL
+    }
+)
+def line_length(x1, y1, x2, y2):
+    l = iof(math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2))
+    return f"Length of line segment from ({iof(x1)}, {iof(y1)}) to ({iof(x2)}, {iof(y2)}) = {l}"

@@ -24,7 +24,7 @@ class CommandsCollection:
 
             try:
                 if t == REAL:
-                    result.append(int_or_float(a))
+                    result.append(iof(a))
                 elif t == INT:
                     result.append(int(a))
                 else:
@@ -41,7 +41,7 @@ class CommandsCollection:
         for a in args:
             try:
                 if type == REAL:
-                    result.append(int_or_float(a))
+                    result.append(iof(a))
                 elif type == INT:
                     result.append(int(a))
                 else:

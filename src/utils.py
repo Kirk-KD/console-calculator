@@ -1,4 +1,4 @@
-def int_or_float(s):
+def iof(s):
     return int(float(s)) if float(s) % 1 == 0 else round(float(s), 9)
 
 
