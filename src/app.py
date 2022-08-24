@@ -66,4 +66,4 @@ def search():
     }
 
 
-app.run(host="127.0.0.1", port=50, threaded=True)
+app.run(threaded=True)
