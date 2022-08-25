@@ -10,9 +10,137 @@ def arg_list_of(t: str):
     return f"List of {t}s"
 
 
+class ArgType:
+    def __init__(self, string_repr: str):
+        self.string_repr = string_repr
+    
+    def try_convert(self, s: str):
+        raise NotImplementedError()
+    
+    def __str__(self):
+        return self.string_repr
+
+    def __repr__(self):
+        return self.string_repr
+
+
+class Real(ArgType):
+    def __init__(self):
+        super().__init__("Real Number")
+    
+    def try_convert(self, s: str):
+        return iof(s)
+
+
+class Int(ArgType):
+    def __init__(self):
+        super().__init__("Integer")
+    
+    def try_convert(self, s: str):
+        return int(s)  # would still raise ValueError if s is "1.0"
+
+
+class CommandError:
+    def __init__(self, msg: str):
+        self.message = error(msg)
+
+
+class ArgsLengthDiff(CommandError):
+    def __init__(self, command, received_len: int):
+        command_name = command.name
+        arg_len = len(command.args_to_types)
+        super().__init__(
+            f"{command_name} requires {arg_len} {'argument' if arg_len == 1 else 'arguments'} " +
+            f"({command.parsed_arg_names}) " +
+            f"but {received_len} {'was' if received_len == 1 else 'were'} given."
+        )
+
+
+class ArgTypeDiff(CommandError):
+    def __init__(self, command_name: str, arg_name: str, arg_type: ArgType):
+        super().__init__(
+            f"{command_name} requires {italic(f'{arg_name}: {arg_type}')} " +
+            "as one of its arguments, but the wrong type was given."
+        )
+
+
+class CommandResult:
+    def __init__(self, command_name: str, parsed_arguments: str, command_result: str):
+        self.command_name = command_name
+        self.parsed_arguments = parsed_arguments
+        self.command_result = command_result
+
+        self.json = {
+            "commandName": self.command_name,
+            "parsedArgs": self.parsed_arguments,
+            "commandResult": self.command_result
+        }
+
+
+class CommandBase:
+    def __init__(self, function, name: str, description: str):
+        self.function = function
+        self.name = name
+        self.description = description
+
+    def check_arguments(self, args: list[str]):
+        raise NotImplementedError()
+    
+    def invoke(self, args: list[str]):
+        raise NotImplementedError()
+
+
+class Command(CommandBase):
+    def __init__(self, function, description: str, args_to_types: dict[str, ArgType]):
+        super().__init__(function, function.__name__, description)
+        self.args_to_types = args_to_types
+
+        # displayed strings
+        self.parsed_arg_names = ", ".join(math_format(k) for k in self.args_to_types.keys())
+        self.parsed_arg_names_with_types = ", ".join(
+            f"{math_format(k)}: {v}" for k, v in self.args_to_types.items())
+        
+    def convert_arguments(self, args: list[str]):
+        if len(args) != len(self.args_to_types):
+            return ArgsLengthDiff(self, len(args))
+
+        converted_result = []
+        for actual, (expected_name, expected_type) in zip(args, self.args_to_types.keys()):
+            try:
+                converted_result.append(expected_type.try_convert(actual))
+            except ValueError:
+                return ArgTypeDiff(self.name, expected_name, expected_type)
+        
+        return converted_result
+
+    def parse_received_args(self, args: list):
+        return ", ".join(f"{arg_name} = {arg_val}" for arg_name, arg_val in zip(self.args_to_types.keys(), args))
+
+    def invoke(self, args: list[str]):
+        converted_result = self.convert_arguments(args)
+        if isinstance(converted_result, CommandError):  # use original `args` because args could not be parsed
+            return CommandResult(self.name, self.parse_received_args(args), converted_result.message)
+        
+        func_result = self.function(*converted_result)  # either a CommandError or a str
+        if isinstance(func_result, CommandError):  # use parsed `converted_result` for better formatting
+            return CommandResult(self.name, self.parse_received_args(converted_result), func_result.message)
+        
+        return CommandResult(self.name, self.parse_received_args(converted_result), func_result)
+
+
+class ArgListCommand(CommandBase):
+    def __init__(self, function, description: str, arg_list_name: str, arg_list_type: ArgType):
+        super().__init__(function, function.__name__, description)
+        self.arg_list_name = arg_list_name
+        self.arg_list_type = arg_list_type
+
+        # displayed strings
+        self.parsed_arg_name_with_type = f"{self.arg_list_name}: {arg_list_of(self.arg_list_type)}"
+
+
 class CommandsCollection:
     def __init__(self):
-        self.commands = {}
+        self.commands: dict[str, Command] = {}
     
     def convert_arguments(self, name: str, args: list):
         result = []
