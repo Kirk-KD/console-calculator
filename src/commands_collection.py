@@ -153,3 +153,20 @@ class CommandsCollection:
             }
             return func
         return inner
+    
+    def command_help_html(self, name: str):
+        cmd = self.commands[name]
+        # args_str = (
+        #     ", ".join([f"{k}: {v}" for k, v in cmd["args"].items()])
+        #     if not cmd["arg_list"]
+        #     else f"{cmd['arg_list_name']}: {arg_list_of(cmd['arg_list_type'])}"
+        # )
+        args_str = (
+            ", ".join(cmd["args"].keys())
+            if not cmd["arg_list"]
+            else cmd["arg_list_name"]
+        )
+        desc = cmd["desc"]
+        return f"""
+        <span class="cmd-name">{name}</span> <span class="cmd-args">{args_str}</span><br>{desc}
+        """

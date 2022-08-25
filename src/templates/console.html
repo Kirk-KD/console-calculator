@@ -14,6 +14,17 @@
                 Type <code>help</code> to get a list of commands.
             </div>
         </div>
+        <div class="console-element">
+            <div class="only-text help-msg">
+                <hr>
+                <span class="cmd-name">quadratic_roots</span> <span class="cmd-args">a, b, c</span><br>
+                Calculates the root(s) of a quadratic equation using a, b, and c where ax2 + bx + c = 0, a != 0<br><br>
+                <span class="cmd-name">quadratic_roots</span> <span class="cmd-args">a, b, c</span><br>
+                Calculates the root(s) of a quadratic equation using a, b, and c where ax2 + bx + c = 0, a != 0<br><br>
+                <span class="cmd-name">quadratic_roots</span> <span class="cmd-args">a, b, c</span><br>
+                Calculates the root(s) of a quadratic equation using a, b, and c where ax2 + bx + c = 0, a != 0
+            </div>
+        </div>
     </div>
     <div class="command-input-container">
         <input type="text" class="command-input" autofocus>
@@ -121,7 +132,14 @@
         }).on("keydown", e => {
             if (["Enter", "ArrowUp", "ArrowDown", "Tab"].indexOf(e.key) > -1) e.preventDefault();
             if (e.key === "Enter") {
-                if (e.target.value.trim().length > 0 && $(".loading-indicator").is(":hidden")) {
+                if (e.target.value.trim().toLowerCase() === "help") {
+                    $.post({
+                        url: "/help"
+                    }).done(response => {
+                        $(".console-container").prepend(response);
+                        e.target.value = "";
+                    });
+                } else if (e.target.value.trim().length > 0 && $(".loading-indicator").is(":hidden")) {
                     $(".loading-indicator").show();
                     let result = parseInput(e.target.value);
 

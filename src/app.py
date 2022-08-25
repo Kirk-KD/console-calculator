@@ -67,6 +67,12 @@ def search():
     }
 
 
+@app.route("/help", methods=["POST"]) 
+def help_msg():
+    return '<div class="console-element"><div class="only-text help-msg"><hr>' + ("<br><br>".join(
+        [commands.command_help_html(name) for name in commands.commands.keys()])) + "</div></div>"
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=True)

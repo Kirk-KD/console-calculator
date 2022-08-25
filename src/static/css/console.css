@@ -45,12 +45,21 @@
 
 .console-container .console-element {
     width: 100%;
-    overflow-x: hidden;
+    /* overflow-x: hidden; */
 }
 
 .console-container .console-element .only-text {
     font-size: calc(12px + 0.2vw);
-    overflow-y: hidden;
+}
+
+.console-container .console-element .help-msg .cmd-name {
+    color: rgba(var(--light-text-color), 1);
+    font-weight: 600;
+}
+
+.console-container .console-element .help-msg .cmd-args {
+    color: rgba(var(--light-text-color), 1);
+    font-style: italic;
 }
 
 .console-container .console-element .original-command {
