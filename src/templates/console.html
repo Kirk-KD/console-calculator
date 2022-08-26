@@ -13,7 +13,7 @@
                 Enter a math expression or a command and press <code>Enter</code>.
                 Type <code>help</code> to get a list of commands.
             </div>
-        </div>  
+        </div>
     </div>
     <div class="command-input-container">
         <input type="text" class="command-input" autofocus>
@@ -33,6 +33,37 @@
 
         $(".ac-suggestions").hide();
         $(".loading-indicator").hide();
+
+        var commandsInfo;
+        var helpHTML;
+        $.post("/load_commands").done(response => {
+            commandsInfo = response;
+
+            // generate HTML for help command
+            let helpHTMLs = [];
+            for (const [name, command] of Object.entries(commandsInfo)) {
+                helpHTMLs.push(command.helpHTML);
+            }
+            helpHTML = `<div class="console-element">
+                            <div class="only-text help-msg">
+                                <hr>
+                                ${helpHTMLs.join("<br><br>")}
+                            </div>
+                        </div>`;
+        });
+        
+        function searchCommands(query, limit) {
+            let results = {};
+
+            for (const [name, detail] of Object.entries(commandsInfo)) {
+                if (name.startsWith(query)) {
+                    results[name] = detail.parsedArgs;
+                    if (Object.keys(results).length == limit) break;
+                }
+            }
+
+            return results;
+        }
 
         function parseInput(input) {
             /*
@@ -76,43 +107,34 @@
                     </div>`
         }
 
-        function makeAutocompleteItems(response) {
+        function makeAutocompleteItems(searchResults) {
             let result = "";
-            for (const [name, args_text] of Object.entries(response.commands)) {
-                result = `<div class="ac-suggestion-item" command-name="${name}">${name} <span class="ac-args">${args_text}</span></div>` + result;
+            for (const [name, parsedArgs] of Object.entries(searchResults)) {
+                result = `<div class="ac-suggestion-item" command-name="${name}">${name} 
+                    <span class="ac-args">${parsedArgs}</span></div>` + result;
             }
             return result;
         }
 
         function updateAutocomplete(commandName) {
-            $.post({
-                url: "/search",
-                data: `{"query": "${commandName}"}`,
-                contentType: "application/json;"
-            }).done(response => {
-                if (!response.isEmpty) {
-                    $(".ac-suggestions").html(makeAutocompleteItems(response)).show();
-                    acSelectionIndex = Object.keys(response.commands).length - 1;
-                    $(".ac-suggestions").children()[acSelectionIndex].id = "ac-suggestion-item-selected";
-                    updateDescription();
-                } else {
-                    $(".ac-suggestions").hide();
-                    $(".command-description").html("");
-                    acSelectionIndex = -1;
-                }
-            });
+            let searchResults = searchCommands(commandName, 10);
+            let resultsLength = Object.keys(searchResults).length;
+            if (resultsLength > 0) {
+                $(".ac-suggestions").html(makeAutocompleteItems(searchResults)).show();
+                acSelectionIndex = resultsLength - 1;
+                $(".ac-suggestions").children()[acSelectionIndex].id = "ac-suggestion-item-selected";
+                updateDescription();
+            } else {
+                console.log("HERE 2");
+                $(".ac-suggestions").hide();
+                $(".command-description").html("");
+                acSelectionIndex = -1;
+            }
         }
 
         function updateDescription() {
-            $.post({
-                url: "/description",
-                data: `{"name": "${
-                    $("#ac-suggestion-item-selected").attr("command-name")
-                }"}`,
-                contentType: "application/json;"
-            }).done(response => {
-                $(".command-description").html(response.description || "");
-            });
+            let commandName = $("#ac-suggestion-item-selected").attr("command-name");
+            $(".command-description").html(commandsInfo[commandName].description || "");
         }
 
         $(".command-input").on("input", e => {
@@ -120,14 +142,11 @@
             if (result.expr === undefined) updateAutocomplete(result.commandName);
         }).on("keydown", e => {
             if (["Enter", "ArrowUp", "ArrowDown", "Tab"].indexOf(e.key) > -1) e.preventDefault();
+
             if (e.key === "Enter") {
                 if (e.target.value.trim().toLowerCase() === "help") {
-                    $.post({
-                        url: "/help"
-                    }).done(response => {
-                        $(".console-container").prepend(response);
-                        e.target.value = "";
-                    });
+                    $(".console-container").prepend(helpHTML);
+                    e.target.value = "";
                 } else if (e.target.value.trim().length > 0 && $(".loading-indicator").is(":hidden")) {
                     $(".loading-indicator").show();
                     let result = parseInput(e.target.value);

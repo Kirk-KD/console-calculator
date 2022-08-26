@@ -1,10 +1,6 @@
 from utils import *
 from formatting import *
 
-REAL = "Real Number"
-INT = "Integer"
-STRING = "String"
-
 
 def arg_list_of(t: str):
     return f"List of {t}s"
@@ -64,6 +60,28 @@ class ArgTypeDiff(CommandError):
         )
 
 
+class ArgListTypeDiff(CommandError):
+    def __init__(self, command_name: str, arg_list_name: str, arg_list_type: ArgType):
+        super().__init__(
+            f"{command_name} requires a {italic(arg_list_of(arg_list_type))} for its " +
+            f"argument list, {italic(arg_list_name)}, but the wrong types were given."
+        )
+
+
+class ArgListNotEnoughArgs(CommandError):
+    def __init__(self, command_name: str, arg_list_name: str):
+        super().__init__(
+            f"{command_name} requires at least 1 argument for its argument list, {italic(arg_list_name)}."
+        )
+
+
+class CommandNotFound(CommandError):
+    def __init__(self, command_name: str):
+        super().__init__(
+            f"Unknown calculation command {command_name}"
+        )
+
+
 class CommandResult:
     def __init__(self, command_name: str, parsed_arguments: str, command_result: str):
         self.command_name = command_name
@@ -83,10 +101,20 @@ class CommandBase:
         self.name = name
         self.description = description
 
-    def check_arguments(self, args: list[str]):
+        self.json = {}  # in browser command info
+        self.parsed_arg_names_with_types = ""
+        self.help_html = ""
+
+    def convert_arguments(self, args: list[str]):
+        raise NotImplementedError()
+    
+    def parse_arguments(self, args: list):
         raise NotImplementedError()
     
     def invoke(self, args: list[str]):
+        raise NotImplementedError()
+    
+    def command_suggestion_json(self):
         raise NotImplementedError()
 
 
@@ -95,17 +123,26 @@ class Command(CommandBase):
         super().__init__(function, function.__name__, description)
         self.args_to_types = args_to_types
 
-        # displayed strings
-        self.parsed_arg_names = ", ".join(math_format(k) for k in self.args_to_types.keys())
+        self.parsed_arg_names = ", ".join(self.args_to_types.keys())
         self.parsed_arg_names_with_types = ", ".join(
-            f"{math_format(k)}: {v}" for k, v in self.args_to_types.items())
+            f"{k}: {v}" for k, v in self.args_to_types.items())
+        
+        self.help_html = (
+            f'<span class="cmd-name">{self.name}</span> ' +
+            f'<span class="cmd-args">{self.parsed_arg_names}</span><br>{self.description}'
+        )
+        self.json = {
+            "parsedArgs": self.parsed_arg_names,
+            "description": self.description,
+            "helpHTML": self.help_html
+        }
         
     def convert_arguments(self, args: list[str]):
         if len(args) != len(self.args_to_types):
             return ArgsLengthDiff(self, len(args))
 
         converted_result = []
-        for actual, (expected_name, expected_type) in zip(args, self.args_to_types.keys()):
+        for actual, (expected_name, expected_type) in zip(args, self.args_to_types.items()):
             try:
                 converted_result.append(expected_type.try_convert(actual))
             except ValueError:
@@ -113,19 +150,19 @@ class Command(CommandBase):
         
         return converted_result
 
-    def parse_received_args(self, args: list):
+    def parse_arguments(self, args: list):
         return ", ".join(f"{arg_name} = {arg_val}" for arg_name, arg_val in zip(self.args_to_types.keys(), args))
 
     def invoke(self, args: list[str]):
         converted_result = self.convert_arguments(args)
         if isinstance(converted_result, CommandError):  # use original `args` because args could not be parsed
-            return CommandResult(self.name, self.parse_received_args(args), converted_result.message)
+            return CommandResult(self.name, self.parse_arguments(args), converted_result.message)
         
         func_result = self.function(*converted_result)  # either a CommandError or a str
         if isinstance(func_result, CommandError):  # use parsed `converted_result` for better formatting
-            return CommandResult(self.name, self.parse_received_args(converted_result), func_result.message)
+            return CommandResult(self.name, self.parse_arguments(converted_result), func_result.message)
         
-        return CommandResult(self.name, self.parse_received_args(converted_result), func_result)
+        return CommandResult(self.name, self.parse_arguments(converted_result), func_result)
 
 
 class ArgListCommand(CommandBase):
@@ -134,167 +171,82 @@ class ArgListCommand(CommandBase):
         self.arg_list_name = arg_list_name
         self.arg_list_type = arg_list_type
 
-        # displayed strings
-        self.parsed_arg_name_with_type = f"{self.arg_list_name}: {arg_list_of(self.arg_list_type)}"
+        self.parsed_arg_names_with_type = f"{self.arg_list_name}: {arg_list_of(self.arg_list_type)}"
+
+        self.help_html = (
+            f'<span class="cmd-name">{self.name}</span> ' +
+            f'<span class="cmd-args">{self.arg_list_name}</span><br>{self.description}'
+        )
+        self.json = {
+            "parsedArgs": self.arg_list_name,
+            "description": self.description,
+            "helpHTML": self.help_html
+        }
+    
+    def convert_arguments(self, args: list[str]):
+        if len(args) == 0:
+            return ArgListNotEnoughArgs(self.name, self.arg_list_name)
+
+        converted_result = []
+        for arg in args:
+            try:
+                converted_result.append(self.arg_list_type.try_convert(arg))
+            except ValueError:
+                return ArgListTypeDiff(self.name, self.arg_list_name, self.arg_list_type)
+        
+        return converted_result
+    
+    def parse_arguments(self, args: list):
+        return ", ".join(str(i) for i in args)
+    
+    def invoke(self, args: list[str]):
+        converted_result = self.convert_arguments(args)
+        if isinstance(converted_result, CommandError):
+            return CommandResult(self.name, self.parse_arguments(args), converted_result.message)
+        
+        func_result = self.function(*converted_result)
+        if isinstance(func_result, CommandError):
+            return CommandResult(self.name, self.parse_arguments(converted_result), func_result.message)
+        
+        return CommandResult(self.name, self.parse_arguments(converted_result), func_result)
 
 
 class CommandsCollection:
     def __init__(self):
-        self.commands: dict[str, Command] = {}
+        self.commands: dict[str, CommandBase] = {}
     
-    def convert_arguments(self, name: str, args: list):
-        result = []
-        types = list(self.commands[name]["args"].values())
+    def load_commands_export(self):
+        """Export a dict/json for command suggestions in frontend."""
 
-        for i in range(len(args)):  # Assuming arguments length has been checked
-            t = types[i]
-            a = args[i]
-
-            try:
-                if t == REAL:
-                    result.append(iof(a))
-                elif t == INT:
-                    result.append(int(a))
-                else:
-                    result.append(a)
-            except ValueError:
-                return -1
-
-        return result
+        return {k: v.json for k, v in self.commands.items()}
     
-    def convert_arguments_list(self, name: str, args: list):
-        result = []
-        type = self.commands[name]["arg_list_type"]
-
-        for a in args:
-            try:
-                if type == REAL:
-                    result.append(iof(a))
-                elif type == INT:
-                    result.append(int(a))
-                else:
-                    result.append(a)
-            except ValueError:
-                return -1
+    def invoke_command(self, command_name: str, arguments: list[str]):
+        if command_name not in self.commands:
+            return CommandResult(command_name, "", CommandNotFound(command_name).message)
         
-        return result
+        return self.commands[command_name].invoke(arguments)
+
+    def search_commands(self, query: str, limit: int):
+        matches = {}
+
+        for command_name, command in self.commands.items():
+            if command_name.startswith(query):
+                matches[command_name] = command.parsed_arg_names_with_types
+                if len(matches) == limit:
+                    break
+        
+        return matches
     
-    def search_command(self, query: str, limit: int):
-        names = {}
-        if len(query):
-            for name in self.commands.keys():
-                if name.startswith(query):
-                    names[name] = (
-                        self.commands[name]["arg_list_name"]
-                        if self.commands[name]["arg_list"]
-                        else ", ".join(list(self.commands[name]["args"].keys()))
-                    )
-                    if len(names) == limit:
-                        break
-        return names
-    
-    def get_description(self, name: str):
-        return self.commands.get(name, {"desc": None})["desc"]
-
-    def invoke_command(self, name: str, args: list):
-        if name in self.commands.keys():
-            if self.commands[name]["arg_list"]:
-                if len(args) > 0:
-                    converted_args = self.convert_arguments_list(name, args)
-                    parsed_args = ", ".join(args)
-
-                    if converted_args == -1:  # wrong argument types
-                        return (
-                            parsed_args,
-                            error(
-                                f"{name} requires a {italic(arg_list_of(self.commands[name]['arg_list_type']))} " +
-                                f"as arguments, but the wrong types were given."
-                            )
-                        )
-                    
-                    command_res = self.commands[name]["func"](*converted_args)
-
-                    return (
-                        parsed_args,
-                        command_res
-                    )
-                else:
-                    return "", error(
-                        f"{name} requires at least 1 argument of type {italic(self.commands[name]['arg_list_type'])} " +
-                        "for its argument list."
-                    )
-            else:
-                if len(args) == len(self.commands[name]["args"]):
-                    converted_args = self.convert_arguments(name, args)
-
-                    arg_names = list(self.commands[name]["args"].keys())
-                    parsed_args = ', '.join([f'{arg_names[i]} = {args[i]}' for i in range(len(args))])
-
-                    if converted_args == -1:  # wrong argument types
-                        expected_args = self.commands[name]['args']
-                        return (
-                            parsed_args,
-                            error(
-                                f"{name} requires {italic(', '.join([f'{k}: {v}' for k, v in expected_args.items()]))} " +
-                                f"as {'argument' if len(expected_args) == 1 else 'arguments'}, " +
-                                f"but the wrong {'type was' if len(expected_args) == 1 else 'types were'} given."
-                            )
-                        )
-
-                    command_res = self.commands[name]["func"](*converted_args)
-
-                    return (
-                        parsed_args,
-                        command_res
-                    )
-                else:
-                    arg_names = list(self.commands[name]["args"].keys())
-                    expected_arg_len = len(arg_names)
-                    actual_arg_len = len(args)
-
-                    return "", error(
-                        f"{name} requires {expected_arg_len} {'argument' if expected_arg_len == 1 else 'arguments'}"
-                        + f" ({', '.join(arg_names)}) but {actual_arg_len} {'was' if actual_arg_len == 1 else 'were'} given."
-                    )
-        else:
-            return "", error(f"Unknown calculation command {name}.")
-    
-    def command(self, desc: str, args: dict[str, str]):
+    def command(self, description: str, args_to_types: dict[str, ArgType]):
         def inner(func):
-            self.commands[func.__name__] = {
-                "arg_list": False,
-                "func": func,
-                "desc": math_format(desc),
-                "args": {math_format(k): v for k, v in args.items()}
-            }
+            self.commands[func.__name__] = Command(
+                func, math_format(description), {math_format(k): v for k, v in args_to_types.items()})
             return func
         return inner
     
-    def arg_list_command(self, desc: str, arg_list_name: str, arg_list_type: str):
+    def arg_list_command(self, description: str, arg_list_name: str, arg_list_type: ArgType):
         def inner(func):
-            self.commands[func.__name__] = {
-                "arg_list": True,
-                "func": func,
-                "desc": math_format(desc),
-                "arg_list_name": math_format(arg_list_name),
-                "arg_list_type": arg_list_type
-            }
+            self.commands[func.__name__] = ArgListCommand(
+                func, math_format(description), math_format(arg_list_name), arg_list_type)
             return func
         return inner
-    
-    def command_help_html(self, name: str):
-        cmd = self.commands[name]
-        # args_str = (
-        #     ", ".join([f"{k}: {v}" for k, v in cmd["args"].items()])
-        #     if not cmd["arg_list"]
-        #     else f"{cmd['arg_list_name']}: {arg_list_of(cmd['arg_list_type'])}"
-        # )
-        args_str = (
-            ", ".join(cmd["args"].keys())
-            if not cmd["arg_list"]
-            else cmd["arg_list_name"]
-        )
-        desc = cmd["desc"]
-        return f"""
-        <span class="cmd-name">{name}</span> <span class="cmd-args">{args_str}</span><br>{desc}
-        """

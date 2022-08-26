@@ -1,5 +1,5 @@
 import math
-from commands_collection import CommandsCollection, REAL, INT, STRING
+from commands_collection import CommandsCollection, Real, Int, CommandError
 from formatting import *
 from utils import iof
 
@@ -10,9 +10,9 @@ commands = CommandsCollection()
     "Calculates the root(s) of a quadratic equation using a, b, and c " +
     "where ax{^2} + bx + c = 0, a != 0.",
     {
-        "a": REAL,
-        "b": REAL,
-        "c": REAL
+        "a": Real(),
+        "b": Real(),
+        "c": Real()
     }
 )
 def quadratic_roots(a, b, c):
@@ -27,9 +27,9 @@ def quadratic_roots(a, b, c):
 @commands.command(
     "Calculates the general term tn of an arithmetic sequence.",
     {
-        "n": INT,
-        "t{_1}": REAL,
-        "common difference": REAL
+        "n": Int(),
+        "t{_1}": Real(),
+        "common difference": Real()
     }
 )
 def arithmetic_general_term(n, t1, d):
@@ -40,9 +40,9 @@ def arithmetic_general_term(n, t1, d):
 @commands.command(
     "Calculates the sum Sn of an arithmetic sequence.",
     {
-        "n": INT,
-        "t{_1}": REAL,
-        "common difference": REAL
+        "n": Int(),
+        "t{_1}": Real(),
+        "common difference": Real()
     }
 )
 def arithmetic_sum(n, t1, d):
@@ -53,9 +53,9 @@ def arithmetic_sum(n, t1, d):
 @commands.command(
     "Calculates the general term tn of a geometric sequence.",
     {
-        "n": INT,
-        "t{_1}": REAL,
-        "common ratio": REAL
+        "n": Int(),
+        "t{_1}": Real(),
+        "common ratio": Real()
     }
 )
 def geometric_general_term(n, t1, r):
@@ -66,9 +66,9 @@ def geometric_general_term(n, t1, r):
 @commands.command(
     "Calculates the sum Sn of a geometric sequence.",
     {
-        "n": INT,
-        "t{_1}": REAL,
-        "common ratio": REAL
+        "n": Int(),
+        "t{_1}": Real(),
+        "common ratio": Real()
     }
 )
 def geometric_sum(n, t1, r):
@@ -80,13 +80,13 @@ def geometric_sum(n, t1, r):
     "Calculates the sum S∞ of an infinite geometric sequence, " +
     "where (-1 < common ratio < 1).",
     {
-        "t{_1}": REAL,
-        "common ratio": REAL
+        "t{_1}": Real(),
+        "common ratio": Real()
     }
 )
 def infinite_geometric_sum(t1, r):
     if not -1 < r < 1:
-        return error("Common ratio must be greater than -1 and less than 1.")
+        return CommandError("Common ratio must be greater than -1 and less than 1.")
 
     s_inf = t1 / (1 - r)
     return f"S∞ = {s_inf}"
@@ -95,7 +95,7 @@ def infinite_geometric_sum(t1, r):
 @commands.command(
     "Simplifies a square root.",
     {
-        "radicand": INT,
+        "radicand": Int(),
     }
 )
 def simplify_square_root(r):
@@ -117,7 +117,7 @@ def simplify_square_root(r):
 @commands.command(
     "Checks if an integer is prime.",
     {
-        "n": INT
+        "n": Int()
     }
 )
 def is_prime(n):
@@ -136,7 +136,7 @@ def is_prime(n):
 @commands.arg_list_command(
     "Calculates the Greatest Common Divisor of a list of integers.",
     "integers...",
-    INT
+    Int()
 )
 def gcd(*integers):
     r = math.gcd(*integers)
@@ -150,7 +150,7 @@ def gcd(*integers):
 @commands.arg_list_command(
     "Calculates the Least Common Multiple of a list of integers.",
     "integers...",
-    INT
+    Int()
 )
 def lcm(*integers):
     r = math.lcm(*integers)
@@ -164,7 +164,7 @@ def lcm(*integers):
 @commands.command(
     "Calculates the area of a circle.",
     {
-        "radius": REAL
+        "radius": Real()
     }
 )
 def circle_area(r):
@@ -172,12 +172,12 @@ def circle_area(r):
 
 
 @commands.command(
-    "Calculates the length of a line segment from (x{_1}, y{_1} to (x{_2}, y{_2}).",
+    "Calculates the length of a line segment from (x{_1}, y{_1}) to (x{_2}, y{_2}).",
     {
-        "x{_1}": REAL,
-        "y{_1}": REAL,
-        "x{_2}": REAL,
-        "y{_2}": REAL
+        "x{_1}": Real(),
+        "y{_1}": Real(),
+        "x{_2}": Real(),
+        "y{_2}": Real()
     }
 )
 def line_length(x1, y1, x2, y2):

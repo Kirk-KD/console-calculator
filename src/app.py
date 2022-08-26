@@ -1,3 +1,4 @@
+import sys
 import os
 from flask import Flask, render_template, request
 from commands import commands
@@ -41,30 +42,13 @@ def calculate():
     command_name = json["commandName"]
     command_arguments = json["arguments"]
 
-    parsed_args, command_result = commands.invoke_command(command_name, command_arguments)
-    return {
-        "commandName": command_name,
-        "parsedArgs": parsed_args,
-        "commandResult": command_result
-    }
+    command_result = commands.invoke_command(command_name, command_arguments)
+    return command_result.json
 
 
-@app.route("/description", methods=["POST"])
-def description():
-    name = request.json["name"]
-    return {
-        "description": commands.get_description(name)
-    }
-
-
-@app.route("/search", methods=["POST"])
-def search():
-    query = request.json["query"]
-    results = commands.search_command(query, 10)
-    return {
-        "isEmpty": len(results) == 0,
-        "commands": results
-    }
+@app.route("/load_commands", methods=["POST"])
+def load_commands():
+    return commands.load_commands_export()
 
 
 @app.route("/help", methods=["POST"]) 
@@ -75,4 +59,4 @@ def help_msg():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=port, debug=(len(sys.argv) > 1 and sys.argv[1] == "debug"))
