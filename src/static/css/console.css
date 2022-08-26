@@ -15,6 +15,20 @@
     height: 100vh;
 }
 
+footer {
+    position: fixed;
+    bottom: 7px;
+    width: 100%;
+    
+    text-align: center;
+}
+
+footer p {
+    font-size: calc(10px + 0.15vw);
+    color: rgba(var(--light-text-color), 1);
+    margin-bottom: 0;
+}
+
 .console-container {
     display: flex;
     align-items: flex-end;
@@ -113,7 +127,7 @@
 
 .ac-suggestions {
     position: absolute;
-    bottom: 7vh;
+    bottom: 8vh;
     left: 10vw;
     width: 16vw;
 
@@ -135,7 +149,7 @@
 }
 
 .ac-suggestions #ac-suggestion-item-selected {
-    border: 1px solid rgba(82, 114, 204, 0.5);
+    border: 1px solid rgba(224, 69, 64, 0.5);
     margin: 2px;
 }
 
