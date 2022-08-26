@@ -8,7 +8,7 @@ env:
 jobs:
   deploy:
     name: Deploy app
-    runs-on: alpine-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: superfly/flyctl-actions/setup-flyctl@master
