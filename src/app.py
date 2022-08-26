@@ -23,7 +23,7 @@ def eval_():
             "originalExpr": unparsed,
             "result": iof(result)
         }
-    except (ValueError, SyntaxError):
+    except (ValueError, SyntaxError, TypeError):
         return {
             "originalExpr": expr,
             "result": error("Invalid math expression.")
