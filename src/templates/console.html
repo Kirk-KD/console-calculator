@@ -11,7 +11,15 @@
             <div class="only-text">
                 <hr>
                 Enter a math expression or a command and press <code>Enter</code>.
-                Type <code>help</code> to get a list of commands.
+                Type <code>help</code> to get a detailed list of commands with descriptions.
+
+                <div class="small-header">Auto Completion</div>
+                Press <code>Tap</code> to auto complete a selected command name.
+                Use <code>Up</code>/<code>Down</code> to select a command from the suggestion list.
+                Or click a command if you really want to use your mouse.
+
+                <div class="small-header">Command History</div>
+                Use <code>Ctrl</code> + <code>Up</code>/<code>Down</code> to navigate through your past commands.
             </div>
         </div>
     </div>
@@ -40,7 +48,10 @@
 
         var commandsInfo;
         var helpHTML;
-        $.post("/load_commands").done(response => {
+        $.post({
+            url: "/load_commands",
+            async: false // blocking because must get `commandsInfo` for other code to work
+        }).done(response => {
             commandsInfo = response;
 
             // generate HTML for help command
@@ -75,10 +86,11 @@
             into a math expression.
             */
 
-            let inputSplit = input.trim().toLowerCase().split(" ");
+            let inputCleaned = input.trim().toLowerCase();
+            let inputSplit = inputCleaned.split(" ");
 
             let command = inputSplit[0];
-            if (IS_CMD_REGEX.test(command)) {
+            if (IS_CMD_REGEX.test(command) || input === "") {
                 let argumentsText = inputSplit.length > 1 ?
                                     inputSplit.slice(1).join(" ") :
                                     "";
@@ -89,7 +101,7 @@
 
                 return {commandName: command, arguments: arguments[0] == "" ? [] : arguments};
             } else {
-                return {expr: input};
+                return {expr: inputCleaned};
             }
         }
 
@@ -140,7 +152,10 @@
             $(".command-description").html(commandsInfo[commandName].description || "");
         }
 
-        $(".command-input").on("input", e => {
+        // Show autocomplete items when autofocused/loaded
+        updateAutocomplete("");
+
+        $(".command-input").on("input focus", e => {
             let result = parseInput(e.target.value);
             if (result.expr === undefined) updateAutocomplete(result.commandName);
         }).on("keydown", e => {

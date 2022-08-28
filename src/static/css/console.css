@@ -66,6 +66,13 @@ footer p {
     font-size: calc(12px + 0.2vw);
 }
 
+.console-container .console-element .only-text .small-header {
+    font-size: calc(16px + 0.2vw);
+    font-weight: 410;
+    margin-top: 18px;
+    margin-bottom: 10px;
+}
+
 .console-container .console-element .help-msg .cmd-name {
     color: rgba(var(--light-text-color), 1);
     font-weight: 600;
