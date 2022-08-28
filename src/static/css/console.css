@@ -153,6 +153,7 @@ footer p {
 
 .ac-suggestions .ac-suggestion-item:hover {
     background-color: rgba(var(--ligth-bg-color), 1);
+    cursor: pointer;
 }
 
 .ac-suggestions #ac-suggestion-item-selected {
