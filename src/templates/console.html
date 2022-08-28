@@ -155,6 +155,12 @@
         // Show autocomplete items when autofocused/loaded
         updateAutocomplete("");
 
+        $(".ac-suggestions").on("click", ".ac-suggestion-item", e => {
+            let commandName = e.target.getAttribute("command-name");
+            $(".command-input").focus().val(commandName);
+            updateAutocomplete(commandName);
+        });
+
         $(".command-input").on("input focus", e => {
             let result = parseInput(e.target.value);
             if (result.expr === undefined) updateAutocomplete(result.commandName);
