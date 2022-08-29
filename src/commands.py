@@ -25,6 +25,27 @@ def quadratic_roots(a, b, c):
 
 
 @commands.command(
+    "Outputs the Vertex, Line of Symmetry, and Y-Intercept of a quadratic function " +
+    "using a, b, and c where y = ax{^2} + bx + c, a != 0.",
+    {
+        "a": Real(),
+        "b": Real(),
+        "c": Real()
+    }
+)
+def quadratic_info(a, b, c):
+    symmetry_x = -b / (2 * a)
+    vertex_x, vertex_y = symmetry_x, (4 * a * c - b ** 2) / (4 * a)
+    y_int = c
+
+    return (
+        f"Line of Symmetry: x = {iof(symmetry_x)}<br>" +
+        f"Vertex: ({iof(vertex_x)}, {iof(vertex_y)})<br>" +
+        f"Y-Intercept: {y_int}"
+    )
+
+
+@commands.command(
     "Calculates the general term tn of an arithmetic sequence.",
     {
         "n": Int(),

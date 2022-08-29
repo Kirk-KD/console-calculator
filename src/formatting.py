@@ -1,3 +1,4 @@
+from utils import iof
 from utils import span
 
 MATH_REPLACE = {
@@ -60,7 +61,7 @@ def superscript(n):
 
 
 def solution_set(solutions: list):
-    return "{" + ", ".join(set([str(e) for e in solutions])) + "}"
+    return "{" + ", ".join(set([iof(e) for e in solutions])) + "}"
 
 
 def error(s):
