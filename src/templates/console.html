@@ -24,7 +24,9 @@
         </div>
     </div>
     <div class="command-input-container">
-        <input type="text" class="command-input" autofocus>
+        <div class="command-input math" tabindex="0">
+            <span class="ci-root-cursor ci-has-cursor">&#8203</span>
+        </div>
         <div class="ms-loading loading-indicator"></div>
     </div>
     <div class="ac-suggestions"></div>
@@ -152,6 +154,19 @@
             $(".command-description").html(commandsInfo[commandName].description || "");
         }
 
+        function replaceMath(input) {
+            switch (input) {
+                case "-": return "−"
+                case "*": return "×"
+                case "/": return "÷"
+                default: return input
+            }
+        }
+
+        function generateMathHTML(input) {
+
+        }
+
         // Show autocomplete items when autofocused/loaded
         updateAutocomplete("");
 
@@ -161,89 +176,38 @@
             updateAutocomplete(commandName);
         });
 
-        $(".command-input").on("input focus", e => {
-            let result = parseInput(e.target.value);
-            if (result.expr === undefined) updateAutocomplete(result.commandName);
+        $(".command-input").on("click", e => {
+            e.target.focus();
         }).on("keydown", e => {
-            if (["Enter", "ArrowUp", "ArrowDown", "Tab"].indexOf(e.key) > -1) e.preventDefault();
+            let selector = $(".command-input");
+            let cursorSelector = $(".ci-has-cursor");
 
-            if (e.key === "Enter") {
-                if (e.target.value.trim().toLowerCase() === "help") {
-                    $(".console-container").prepend(helpHTML);
-                    e.target.value = "";
-                } else if (e.target.value.trim().length > 0 && $(".loading-indicator").is(":hidden")) {
-                    $(".loading-indicator").show();
-                    let result = parseInput(e.target.value);
-
-                    function afterRequest() {
-                        commandHistory.push(e.target.value);
-
-                        historyIndex = 0;
-                        e.target.value = "";
-
-                        $(".ac-suggestions").html("").hide();
-                        $(".command-description").html("");
-                        $(".loading-indicator").hide();
-                    }
-
-                    if (result.expr === undefined) {
-                        let commandData = JSON.stringify({
-                            commandName: result.commandName,
-                            arguments: result.arguments
-                        });
-
-                        $.post({
-                            url: "/calculate",
-                            data: commandData,
-                            contentType: "application/json;"
-                        }).done(response => {
-                            $(".console-container").prepend(makeCommandResultElement(response));
-                            afterRequest();
-                        });
-                    } else {
-                        let exprData = JSON.stringify(result);
-
-                        $.post({
-                            url: "/eval",
-                            data: exprData,
-                            contentType: "application/json;"
-                        }).done(response => {
-                            $(".console-container").prepend(makeEvalResultElement(response));
-                            afterRequest();
-                        });
-                    }
+            if (e.key.length === 1 && /[-+*\/()^.a-zA-Z0-9]/.test(e.key)) {
+                if (/[0-9.]/.test(e.key)) {
+                    cursorSelector.removeClass("ci-has-cursor");
+                    cursorSelector.after(`<span class="ci-digit ci-has-cursor">${e.key}</span>`);
+                } else if (/[-+*\/]/.test(e.key)) {
+                    cursorSelector.removeClass("ci-has-cursor");
+                    if ( // the current + or - sign is an unary operator
+                        (e.key === "+" || e.key === "-") &&
+                        (/[−+×÷]/.test(cursorSelector.html()) || cursorSelector.html() === "")
+                    ) cursorSelector.after(`<span class="ci-unary-op ci-has-cursor">${replaceMath(e.key)}</span>`);
+                    else cursorSelector.after(`<span class="ci-binary-op ci-has-cursor">${replaceMath(e.key)}</span>`);
+                } else if (e.key === "^" && /[0-9()]/.test(cursorSelector.html())) {
+                    cursorSelector.removeClass("ci-has-cursor");
+                    cursorSelector.after(`<span class="ci-superscript"><span class="ci-section-root-cursor ci-has-cursor">&#8203</span></span>`);
                 }
-            } else if (e.ctrlKey && e.key === "ArrowUp") {
-                if (commandHistory.length > 0 && commandHistory.length + historyIndex - 1 >= 0) {
-                    historyIndex--;
-                    e.target.value = commandHistory[commandHistory.length + historyIndex];
-                }
-            } else if (e.ctrlKey && e.key === "ArrowDown") {
-                if (commandHistory.length > 0 && commandHistory.length + historyIndex + 1 < commandHistory.length) {
-                    historyIndex++;
-                    e.target.value = commandHistory[commandHistory.length + historyIndex];
-                }
-            } else if (e.key == "ArrowUp" && acSelectionIndex !== -1) {
-                let children = $(".ac-suggestions").children();
-                children[acSelectionIndex].removeAttribute("id");
+            } else if (e.key === "Backspace") {
+                // cursor is not at the very beginning of the input
+                if (!cursorSelector.hasClass("ci-root-cursor")) {
+                    // cursor was at the beginning of a superscript
+                    if (cursorSelector.hasClass("ci-section-root-cursor")) {
+                        cursorSelector.parent().prev().addClass("ci-has-cursor"); // move cursor outside of the superscript
+                        cursorSelector.parent().remove();
+                    } else cursorSelector.prev().addClass("ci-has-cursor");
 
-                acSelectionIndex--;
-                if (acSelectionIndex < 0) acSelectionIndex = children.length - 1;
-                children[acSelectionIndex].id = "ac-suggestion-item-selected";
-                updateDescription();
-            } else if (e.key == "ArrowDown" && acSelectionIndex !== -1) {
-                let children = $(".ac-suggestions").children();
-                children[acSelectionIndex].removeAttribute("id");
-
-                acSelectionIndex++;
-                if (acSelectionIndex >= children.length) acSelectionIndex = 0;
-                children[acSelectionIndex].id = "ac-suggestion-item-selected";
-                updateDescription();
-            } else if (e.key == "Tab" && acSelectionIndex !== -1) {
-                let children = $(".ac-suggestions").children();
-                let commandName = children[acSelectionIndex].getAttribute("command-name");
-                e.target.value = commandName;
-                updateAutocomplete(commandName);
+                    cursorSelector.remove();
+                }
             }
         });
     })();
