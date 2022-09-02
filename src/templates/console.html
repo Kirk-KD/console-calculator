@@ -52,6 +52,12 @@
         */
         const CI_CURSOR = `<span class="ci-cursor">&#8203</span>`;
 
+        const UPPER_ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const LOWER_ALPHA = UPPER_ALPHA.toLowerCase();
+        const NUM_CHARS = "0123456789.";
+        const OPERATORS = "+-*/";
+        const CONVERTED_OPERATORS = "+−×÷";
+
         $(".ac-suggestions").hide();
         $(".loading-indicator").hide();
 
@@ -195,6 +201,12 @@
             }
         }
 
+        function getText(jquery) {
+            /* Gets the text and not the children elements of a jquery. */
+
+            return jquery[0].childNodes[0] ? jquery[0].childNodes[0].nodeValue : "";
+        }
+
         // Show autocomplete items when autofocused/loaded
         updateAutocomplete("");
 
@@ -222,8 +234,8 @@
                 }
             }
         }).on("click", ".ci-clickable", e => {
-            if (e.target.classList.contains("ci-clickable")) {
-                let jElem = $(e.target);
+            let jElem = $(e.target);
+            if (jElem.hasClass("ci-clickable")) {
                 removeCursor($(".ci-has-cursor"));
 
                 let mouseX = e.pageX - jElem.offset().left;
@@ -235,18 +247,18 @@
             let selector = $(".command-input");
             let cursorSelector = $(".ci-has-cursor");
 
-            if (e.key.length === 1 && /[-+*\/()^.a-zA-Z0-9]/.test(e.key)) {
-                if (/[0-9.]/.test(e.key)) {
+            if (e.key.length === 1) {
+                if (NUM_CHARS.includes(e.key)) { // Single digit
                     removeCursor(cursorSelector);
                     cursorSelector.after(`<span class="ci-clickable ci-digit ci-has-cursor">${e.key}${CI_CURSOR}</span>`);
-                } else if (/[-+*\/]/.test(e.key)) {
+                } else if (OPERATORS.includes(e.key)) { // Binary and Unary operators
                     removeCursor(cursorSelector);
                     if ( // the current + or - sign is an unary operator
                         (e.key === "+" || e.key === "-") &&
-                        (/[−+×÷]/.test(cursorSelector.html()) || cursorSelector.html() === "")
+                        (CONVERTED_OPERATORS.includes(getText(cursorSelector)) || getText(cursorSelector) === "")
                     ) cursorSelector.after(`<span class="ci-clickable ci-unary-op ci-has-cursor">${replaceMath(e.key)}${CI_CURSOR}</span>`);
                     else cursorSelector.after(`<span class="ci-clickable ci-binary-op ci-has-cursor">${replaceMath(e.key)}${CI_CURSOR}</span>`);
-                } else if (e.key === "^" && /[0-9()]/.test(cursorSelector.html())) {
+                } else if (e.key === "^" && (NUM_CHARS + "()").includes(getText(cursorSelector))) { // Exponent
                     removeCursor(cursorSelector);
                     cursorSelector.after(`<span class="ci-superscript"><span class="ci-section-root-cursor ci-has-cursor">${CI_CURSOR}</span></span>`);
                 }
