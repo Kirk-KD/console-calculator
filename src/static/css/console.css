@@ -127,16 +127,27 @@ footer p {
     border-radius: var(--default-border-radius);
 
     display: flex;
-    align-items: center;
+    align-items: stretch;
 
     outline: none; /* to remove stupid outline */
+}
+
+.command-input-container .command-input span {
+    display: inline-flex;
+    align-items: center;
 }
 
 /* .ci-digit {
 
 } */
 
-.ci-has-cursor {
+.ci-clickable {
+    border-right: 1px solid transparent;
+}
+
+.ci-has-cursor .ci-cursor {
+    height: 60%;
+
     border-right: 1px solid rgba(var(--main-text-color), 1);
     animation: cursor-blink 1s linear infinite;
     -webkit-animation: cursor-blink 1s linear infinite;

@@ -25,7 +25,7 @@
     </div>
     <div class="command-input-container">
         <div class="command-input math" tabindex="0">
-            <span class="ci-root-cursor ci-has-cursor">&#8203</span>
+            <span class="ci-root-cursor ci-has-cursor"><span class="ci-cursor">&#8203</span></span>
         </div>
         <div class="ms-loading loading-indicator"></div>
     </div>
@@ -44,6 +44,13 @@
         var acSelectionIndex = -1;
 
         const IS_CMD_REGEX = /[a-z_]/i;
+
+        /*
+        CI_CURSOR should be used as a child of a non-container ci-type such as
+        a ci-digit, and NOT a ci-superscript. The purpose of CI_CURSOR is only
+        to display the blinking cursor correctly.
+        */
+        const CI_CURSOR = `<span class="ci-cursor">&#8203</span>`;
 
         $(".ac-suggestions").hide();
         $(".loading-indicator").hide();
@@ -167,6 +174,28 @@
 
         }
 
+        function addCursor(jquery) {
+            /* Adds a cursor to the end of a ci <span>. */
+
+            let children = jquery.children();
+
+            if (!children.last().hasClass("ci-cursor")) {
+                jquery.append(CI_CURSOR).addClass("ci-has-cursor");
+            }
+        }
+
+        function removeCursor(jquery) {
+            /* Removes a cursor from a ci <span>. */
+            
+            let children = jquery.children();
+            console.log(children);
+
+            if (children.last().hasClass("ci-cursor")) {
+                children.last().remove();
+                jquery.removeClass("ci-has-cursor");
+            }
+        }
+
         // Show autocomplete items when autofocused/loaded
         updateAutocomplete("");
 
@@ -178,33 +207,40 @@
 
         $(".command-input").on("click", e => {
             e.target.focus();
+        }).on("click", ".ci-clickable", e => {
+            if (e.target.classList.contains("ci-clickable")) {
+                let jelem = $(e.target);
+                removeCursor($(".ci-has-cursor"));
+                addCursor(jelem);
+            }
         }).on("keydown", e => {
             let selector = $(".command-input");
             let cursorSelector = $(".ci-has-cursor");
 
             if (e.key.length === 1 && /[-+*\/()^.a-zA-Z0-9]/.test(e.key)) {
                 if (/[0-9.]/.test(e.key)) {
-                    cursorSelector.removeClass("ci-has-cursor");
-                    cursorSelector.after(`<span class="ci-digit ci-has-cursor">${e.key}</span>`);
+                    removeCursor(cursorSelector);
+                    cursorSelector.after(`<span class="ci-clickable ci-digit ci-has-cursor">${e.key}${CI_CURSOR}</span>`);
                 } else if (/[-+*\/]/.test(e.key)) {
-                    cursorSelector.removeClass("ci-has-cursor");
+                    removeCursor(cursorSelector);
                     if ( // the current + or - sign is an unary operator
                         (e.key === "+" || e.key === "-") &&
                         (/[−+×÷]/.test(cursorSelector.html()) || cursorSelector.html() === "")
-                    ) cursorSelector.after(`<span class="ci-unary-op ci-has-cursor">${replaceMath(e.key)}</span>`);
-                    else cursorSelector.after(`<span class="ci-binary-op ci-has-cursor">${replaceMath(e.key)}</span>`);
+                    ) cursorSelector.after(`<span class="ci-clickable ci-unary-op ci-has-cursor">${replaceMath(e.key)}${CI_CURSOR}</span>`);
+                    else cursorSelector.after(`<span class="ci-clickable ci-binary-op ci-has-cursor">${replaceMath(e.key)}${CI_CURSOR}</span>`);
                 } else if (e.key === "^" && /[0-9()]/.test(cursorSelector.html())) {
-                    cursorSelector.removeClass("ci-has-cursor");
-                    cursorSelector.after(`<span class="ci-superscript"><span class="ci-section-root-cursor ci-has-cursor">&#8203</span></span>`);
+                    removeCursor(cursorSelector);
+                    cursorSelector.after(`<span class="ci-superscript"><span class="ci-section-root-cursor ci-has-cursor">${CI_CURSOR}</span></span>`);
                 }
             } else if (e.key === "Backspace") {
                 // cursor is not at the very beginning of the input
                 if (!cursorSelector.hasClass("ci-root-cursor")) {
                     // cursor was at the beginning of a superscript
                     if (cursorSelector.hasClass("ci-section-root-cursor")) {
-                        cursorSelector.parent().prev().addClass("ci-has-cursor"); // move cursor outside of the superscript
+                        // move cursor outside of the superscript and add cursor
+                        addCursor(cursorSelector.parent().prev());
                         cursorSelector.parent().remove();
-                    } else cursorSelector.prev().addClass("ci-has-cursor");
+                    } else addCursor(cursorSelector.prev());
 
                     cursorSelector.remove();
                 }
