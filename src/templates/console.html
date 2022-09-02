@@ -188,7 +188,6 @@
             /* Removes a cursor from a ci <span>. */
             
             let children = jquery.children();
-            console.log(children);
 
             if (children.last().hasClass("ci-cursor")) {
                 children.last().remove();
@@ -207,11 +206,30 @@
 
         $(".command-input").on("click", e => {
             e.target.focus();
+
+            let jElem = $(e.target);
+            if (jElem.hasClass("command-input")) {
+                let mouseX = e.pageX;
+                let firstChild = jElem.children().first();
+                let lastChild = jElem.children().last();
+
+                if (mouseX < firstChild.offset().left) {
+                    removeCursor($(".ci-has-cursor"));
+                    addCursor(firstChild);
+                } else if (mouseX > lastChild.offset().left + lastChild.width()) {
+                    removeCursor($(".ci-has-cursor"));
+                    addCursor(lastChild);
+                }
+            }
         }).on("click", ".ci-clickable", e => {
             if (e.target.classList.contains("ci-clickable")) {
-                let jelem = $(e.target);
+                let jElem = $(e.target);
                 removeCursor($(".ci-has-cursor"));
-                addCursor(jelem);
+
+                let mouseX = e.pageX - jElem.offset().left;
+                let elemWidth = jElem.width();
+                if (mouseX < elemWidth / 2) addCursor(jElem.prev());
+                else addCursor(jElem);
             }
         }).on("keydown", e => {
             let selector = $(".command-input");

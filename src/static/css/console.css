@@ -142,7 +142,7 @@ footer p {
 } */
 
 .ci-clickable {
-    border-right: 1px solid transparent;
+    /* border-right: 1px solid transparent; */
 }
 
 .ci-has-cursor .ci-cursor {
