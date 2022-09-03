@@ -238,6 +238,7 @@
                     child.hasClass("ci-binary-op") ||
                     child.hasClass("ci-unary-op")
                 ) result += undoReplaceMath(getText(child));
+                else if (child.hasClass("ci-space")) result += " ";
                 else if (child.hasClass("ci-superscript"))
                     result += `**(${commandInputToString(child)})`;
             });
@@ -320,6 +321,18 @@
                     cursorSelector.after(
                         `<span class="ci-clickable ci-letter ci-has-cursor">${e.key}${CI_CURSOR}</span>`
                     );
+                } else if (e.key === " ") {
+                    if ( // inputting command name
+                        selector.children().last().hasClass("ci-letter") &&
+                        cursorSelector.hasClass("ci-letter") &&
+                        !selector.attr("has-command-name")
+                    ) {
+                        removeCursor(cursorSelector);
+                        cursorSelector.after(
+                            `<span class="ci-clickable ci-space ci-has-cursor">&ensp;${CI_CURSOR}</span>`
+                        );
+                        selector.attr("has-command-name", "true");
+                    }
                 }
             } else if (e.key === "Backspace") {
                 // cursor is not at the very beginning of the input
@@ -329,6 +342,9 @@
                         // move cursor outside of the superscript and add cursor
                         addCursor(cursorSelector.parent().prev());
                         cursorSelector.parent().remove();
+                    } else if (cursorSelector.hasClass("ci-space")) {
+                        selector.attr("has-command-name", "");
+                        addCursor(cursorSelector.prev());
                     } else addCursor(cursorSelector.prev());
 
                     cursorSelector.remove();
