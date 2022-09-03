@@ -176,6 +176,15 @@
             }
         }
 
+        function undoReplaceMath(input) {
+            switch (input) {
+                case "−": return "-"
+                case "×": return "*"
+                case "÷": return "/"
+                default: return input
+            }
+        }
+
         function generateMathHTML(input) {
 
         }
@@ -205,6 +214,35 @@
             /* Gets the text and not the children elements of a jquery. */
 
             return jquery[0].childNodes[0] ? jquery[0].childNodes[0].nodeValue : "";
+        }
+
+        function commandInputToString(jquery) {
+            /*
+            Gets the content of command-input and parse it to pass 
+            to the backend to be processed.
+
+            `jquery`:
+                the command-input or a child element to be parsed to 
+                string recursively.    
+            */
+
+            let result = "";
+
+            jquery.children().each(function() {
+                let child = $(this);
+                if (
+                    child.hasClass("ci-digit") ||
+                    child.hasClass("ci-letter")
+                ) result += getText(child);
+                else if (
+                    child.hasClass("ci-binary-op") ||
+                    child.hasClass("ci-unary-op")
+                ) result += undoReplaceMath(getText(child));
+                else if (child.hasClass("ci-superscript"))
+                    result += `**(${commandInputToString(child)})`;
+            });
+
+            return result;
         }
 
         // Show autocomplete items when autofocused/loaded
@@ -248,19 +286,40 @@
             let cursorSelector = $(".ci-has-cursor");
 
             if (e.key.length === 1) {
+                // math expressions
                 if (NUM_CHARS.includes(e.key)) { // Single digit
                     removeCursor(cursorSelector);
-                    cursorSelector.after(`<span class="ci-clickable ci-digit ci-has-cursor">${e.key}${CI_CURSOR}</span>`);
+                    cursorSelector.after(
+                        `<span class="ci-clickable ci-digit ci-has-cursor">${e.key}${CI_CURSOR}</span>`
+                    );
                 } else if (OPERATORS.includes(e.key)) { // Binary and Unary operators
                     removeCursor(cursorSelector);
-                    if ( // the current + or - sign is an unary operator
-                        (e.key === "+" || e.key === "-") &&
-                        (CONVERTED_OPERATORS.includes(getText(cursorSelector)) || getText(cursorSelector) === "")
-                    ) cursorSelector.after(`<span class="ci-clickable ci-unary-op ci-has-cursor">${replaceMath(e.key)}${CI_CURSOR}</span>`);
-                    else cursorSelector.after(`<span class="ci-clickable ci-binary-op ci-has-cursor">${replaceMath(e.key)}${CI_CURSOR}</span>`);
+
+                    // the current + or - sign is an unary operator
+                    if ((e.key === "+" || e.key === "-") &&
+                        (CONVERTED_OPERATORS.includes(getText(cursorSelector))
+                        || getText(cursorSelector) === ""))
+                        cursorSelector.after(
+                            `<span class="ci-clickable ci-unary-op ci-has-cursor">${replaceMath(e.key)}${CI_CURSOR}</span>`
+                        );
+                    else {
+                        cursorSelector.after(
+                            `<span class="ci-clickable ci-binary-op ci-has-cursor">${replaceMath(e.key)}${CI_CURSOR}</span>`
+                        );
+                    }
                 } else if (e.key === "^" && (NUM_CHARS + "()").includes(getText(cursorSelector))) { // Exponent
                     removeCursor(cursorSelector);
-                    cursorSelector.after(`<span class="ci-superscript"><span class="ci-section-root-cursor ci-has-cursor">${CI_CURSOR}</span></span>`);
+                    cursorSelector.after(
+                        `<span class="ci-superscript"><span class="ci-section-root-cursor ci-has-cursor">${CI_CURSOR}</span></span>`
+                    );
+                }
+
+                // commands
+                else if ((UPPER_ALPHA + LOWER_ALPHA).includes(e.key)) {
+                    removeCursor(cursorSelector);
+                    cursorSelector.after(
+                        `<span class="ci-clickable ci-letter ci-has-cursor">${e.key}${CI_CURSOR}</span>`
+                    );
                 }
             } else if (e.key === "Backspace") {
                 // cursor is not at the very beginning of the input
@@ -274,6 +333,8 @@
 
                     cursorSelector.remove();
                 }
+            } else if (e.key === "Enter") {
+                console.log(commandInputToString(selector));
             }
         });
     })();
