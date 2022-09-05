@@ -137,9 +137,13 @@ footer p {
     align-items: center;
 }
 
-/* .ci-digit {
+.ci-digit {
 
-} */
+}
+
+.ci-letter {
+    font-weight: 420;
+}
 
 .ci-clickable {
     /* border-right: 1px solid transparent; */
