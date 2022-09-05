@@ -363,10 +363,13 @@
                     } else if (cursorSelector.hasClass("ci-space")) {
                         selector.attr("has-command-name", "");
                         addCursor(cursorSelector.prev());
+                    } else if (cursorSelector.prev().hasClass("ci-superscript")) {
+                        addCursor(cursorSelector.prev().children().last());
                     } else addCursor(cursorSelector.prev());
 
                     cursorSelector.remove();
                 }
+                console.log($(".ci-has-cursor"));
             } else if (e.key === "Enter") {
                 console.log(commandInputToString(selector));
             }
