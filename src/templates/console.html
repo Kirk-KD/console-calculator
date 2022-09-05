@@ -369,9 +369,34 @@
 
                     cursorSelector.remove();
                 }
-                console.log($(".ci-has-cursor"));
             } else if (e.key === "Enter") {
                 console.log(commandInputToString(selector));
+            } else if (e.key === "ArrowLeft") {
+                let prev = cursorSelector.prev();
+                console.log(prev);
+                if (prev.length) {
+                    if (prev.hasClass("ci-superscript")) addCursor(prev.children().last());
+                    else addCursor(prev);
+                    removeCursor(cursorSelector);
+                } else if (cursorSelector.hasClass("ci-section-root-cursor")) {
+                    addCursor(cursorSelector.parent().prev());
+                    removeCursor(cursorSelector);
+                }
+            } else if (e.key === "ArrowRight") {
+                let next = cursorSelector.next();
+                if (next.length) {
+                    if (next.hasClass("ci-superscript")) addCursor(next.children().first());
+                    else addCursor(next);
+                    removeCursor(cursorSelector);
+                } else if (cursorSelector.parent().hasClass("ci-superscript")) { // cursorSelector is the last child of a ci-superscript
+                    let parentNext = cursorSelector.parent().next();
+                    if (parentNext.length) {
+                        addCursor(parentNext);
+                        removeCursor(cursorSelector);
+                    } else {
+                        // TODO
+                    }
+                }
             }
         });
     })();
