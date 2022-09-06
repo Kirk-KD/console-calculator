@@ -1,3 +1,4 @@
+from evaluate import eval_math
 from utils import *
 from formatting import *
 
@@ -224,7 +225,17 @@ class CommandsCollection:
         if command_name not in self.commands:
             return CommandResult(command_name, "", CommandNotFound(command_name).message)
         
-        return self.commands[command_name].invoke(arguments)
+        args_after_eval = []
+        for arg in arguments:
+            try:
+                result, _ = eval_math(arg, do_unparse=False)
+                args_after_eval.append(iof(result))
+            except (ValueError, SyntaxError, TypeError):
+                return CommandResult(command_name, "", error("Invalid math expression."))
+            except ZeroDivisionError:
+                return CommandResult(command_name, "", error("Cannot divide by zero."))
+
+        return self.commands[command_name].invoke(args_after_eval)
 
     def search_commands(self, query: str, limit: int):
         matches = {}

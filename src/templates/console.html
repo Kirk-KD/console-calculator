@@ -24,7 +24,9 @@
         </div>
     </div>
     <div class="command-input-container">
-        <input type="text" class="command-input" autofocus>
+        <div class="command-input math" tabindex="0">
+            <span class="ci-root-cursor ci-has-cursor"><span class="ci-cursor">&#8203</span></span>
+        </div>
         <div class="ms-loading loading-indicator"></div>
     </div>
     <div class="ac-suggestions"></div>
@@ -42,6 +44,21 @@
         var acSelectionIndex = -1;
 
         const IS_CMD_REGEX = /[a-z_]/i;
+
+        /*
+        CI_CURSOR should be used as a child of a non-container ci-type such as
+        a ci-digit, and NOT a ci-superscript. The purpose of CI_CURSOR is only
+        to display the blinking cursor correctly.
+        */
+        const CI_CURSOR = `<span class="ci-cursor">&#8203</span>`;
+
+        const DEFAULT_COMMAND_INPUT = `<span class="ci-root-cursor ci-has-cursor">${CI_CURSOR}</span>`;
+
+        const UPPER_ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const LOWER_ALPHA = UPPER_ALPHA.toLowerCase();
+        const NUM_CHARS = "0123456789.";
+        const OPERATORS = "+-*/";
+        const CONVERTED_OPERATORS = "+−×÷";
 
         $(".ac-suggestions").hide();
         $(".loading-indicator").hide();
@@ -78,31 +95,6 @@
             }
 
             return results;
-        }
-
-        function parseInput(input) {
-            /*
-            Parse console input into a command and arguments list, or
-            into a math expression.
-            */
-
-            let inputCleaned = input.trim().toLowerCase();
-            let inputSplit = inputCleaned.split(" ");
-
-            let command = inputSplit[0];
-            if (IS_CMD_REGEX.test(command) || input === "") {
-                let argumentsText = inputSplit.length > 1 ?
-                                    inputSplit.slice(1).join(" ") :
-                                    "";
-
-                let arguments = argumentsText.split(",")
-                for (let i = 0; i < arguments.length; i++)
-                    arguments[i] = arguments[i].trim();
-
-                return {commandName: command, arguments: arguments[0] == "" ? [] : arguments};
-            } else {
-                return {expr: inputCleaned};
-            }
         }
 
         function makeCommandResultElement(response) {
@@ -152,55 +144,250 @@
             $(".command-description").html(commandsInfo[commandName].description || "");
         }
 
+        function replaceMath(input) {
+            switch (input) {
+                case "-": return "−"
+                case "*": return "×"
+                case "/": return "÷"
+                default: return input
+            }
+        }
+
+        function undoReplaceMath(input) {
+            switch (input) {
+                case "−": return "-"
+                case "×": return "*"
+                case "÷": return "/"
+                default: return input
+            }
+        }
+
+        function addCursor(jquery) {
+            /* Adds a cursor to the end of a ci <span>. */
+
+            let children = jquery.children();
+
+            if (!children.last().hasClass("ci-cursor")) {
+                jquery.append(CI_CURSOR).addClass("ci-has-cursor");
+            }
+        }
+
+        function removeCursor(jquery) {
+            /* Removes a cursor from a ci <span>. */
+            
+            let children = jquery.children();
+
+            if (children.last().hasClass("ci-cursor")) {
+                children.last().remove();
+                jquery.removeClass("ci-has-cursor");
+            }
+        }
+
+        function getText(jquery) {
+            /* Gets the text and not the children elements of a jquery. */
+
+            return jquery[0].childNodes[0] ? jquery[0].childNodes[0].nodeValue : "";
+        }
+
+        function commandInputToString(jquery) {
+            /*
+            Gets the content of command-input and parse it to pass 
+            to the backend to be processed.
+
+            `jquery`:
+                the command-input or a child element to be parsed to 
+                string recursively.
+            */
+
+            let result = "";
+
+            jquery.children().each(function() {
+                let child = $(this);
+                if (
+                    child.hasClass("ci-digit") ||
+                    child.hasClass("ci-letter")
+                ) result += getText(child);
+                else if (
+                    child.hasClass("ci-binary-op") ||
+                    child.hasClass("ci-unary-op")
+                ) result += undoReplaceMath(getText(child));
+                else if (child.hasClass("ci-space")) result += " ";
+                else if (child.hasClass("ci-comma")) result += ",";
+                else if (child.hasClass("ci-superscript"))
+                    result += `**(${commandInputToString(child)})`;
+            });
+
+            return result;
+        }
+
+        function commandNameToCommandInput(commandName) {
+            let html = `<span class="ci-root-cursor"></span>`;
+            for (const c of commandName) {
+                html += `<span class="ci-clickable ci-letter">${c}</span>`;
+            }
+            html += `<span class="ci-clickable ci-space ci-has-cursor">&ensp;${CI_CURSOR}</span>`;
+            return html;
+        }
+
+        function parseCommandInputText(text) {
+            /* Takes the parsed string of the command input and convert it to an object. */
+
+            if (text.includes(" ")) {
+                let [commandName, rawArgs] = text.split(" ");
+                let args = rawArgs.split(",")
+
+                return {commandName: commandName, arguments: args};
+            } else return {expr: text};
+        }
+
         // Show autocomplete items when autofocused/loaded
         updateAutocomplete("");
 
         $(".ac-suggestions").on("click", ".ac-suggestion-item", e => {
             let commandName = e.target.getAttribute("command-name");
-            $(".command-input").focus().val(commandName);
+            $("command-input").html(commandNameToCommandInput(commandName)).attr("has-command-name", "true");
             updateAutocomplete(commandName);
         });
 
-        $(".command-input").on("input focus", e => {
-            let result = parseInput(e.target.value);
-            if (result.expr === undefined) updateAutocomplete(result.commandName);
+        $(".command-input").focus().on("click", e => {
+            e.target.focus();
+
+            let jElem = $(e.target);
+            if (jElem.hasClass("command-input")) {
+                let mouseX = e.pageX;
+                let firstChild = jElem.children().first();
+                let lastChild = jElem.children().last();
+
+                if (mouseX < firstChild.offset().left) {
+                    removeCursor($(".ci-has-cursor"));
+                    addCursor(firstChild);
+                } else if (mouseX > lastChild.offset().left + lastChild.width()) {
+                    removeCursor($(".ci-has-cursor"));
+                    addCursor(lastChild);
+                }
+            }
+        }).on("click", ".ci-clickable", e => {
+            let jElem = $(e.target);
+            if (jElem.hasClass("ci-clickable")) {
+                removeCursor($(".ci-has-cursor"));
+
+                let mouseX = e.pageX - jElem.offset().left;
+                let elemWidth = jElem.width();
+                if (mouseX < elemWidth / 2) addCursor(jElem.prev());
+                else addCursor(jElem);
+            }
         }).on("keydown", e => {
-            if (["Enter", "ArrowUp", "ArrowDown", "Tab"].indexOf(e.key) > -1) e.preventDefault();
+            let selector = $(".command-input");
+            let cursorSelector = $(".ci-has-cursor");
 
-            if (e.key === "Enter") {
-                if (e.target.value.trim().toLowerCase() === "help") {
-                    $(".console-container").prepend(helpHTML);
-                    e.target.value = "";
-                } else if (e.target.value.trim().length > 0 && $(".loading-indicator").is(":hidden")) {
-                    $(".loading-indicator").show();
-                    let result = parseInput(e.target.value);
-
-                    function afterRequest() {
-                        commandHistory.push(e.target.value);
-
-                        historyIndex = 0;
-                        e.target.value = "";
-
-                        $(".ac-suggestions").html("").hide();
-                        $(".command-description").html("");
-                        $(".loading-indicator").hide();
+            if (e.key.length === 1 && !e.ctrlKey) {
+                // math expressions
+                if (NUM_CHARS.includes(e.key)) { // Single digit
+                    if (!cursorSelector.hasClass("ci-letter")) {
+                        removeCursor(cursorSelector);
+                        cursorSelector.after(
+                            `<span class="ci-clickable ci-digit ci-has-cursor">${e.key}${CI_CURSOR}</span>`
+                        );
                     }
+                } else if (OPERATORS.includes(e.key)) { // Binary and Unary operators
+                    removeCursor(cursorSelector);
 
-                    if (result.expr === undefined) {
-                        let commandData = JSON.stringify({
-                            commandName: result.commandName,
-                            arguments: result.arguments
-                        });
+                    // the current + or - sign is an unary operator
+                    if ((e.key === "+" || e.key === "-") &&
+                        (CONVERTED_OPERATORS.includes(getText(cursorSelector))
+                        || getText(cursorSelector) === ""))
+                        cursorSelector.after(
+                            `<span class="ci-clickable ci-unary-op ci-has-cursor">${replaceMath(e.key)}${CI_CURSOR}</span>`
+                        );
+                    else {
+                        cursorSelector.after(
+                            `<span class="ci-clickable ci-binary-op ci-has-cursor">${replaceMath(e.key)}${CI_CURSOR}</span>`
+                        );
+                    }
+                } else if (e.key === "^" && (NUM_CHARS + "()").includes(getText(cursorSelector))) { // Exponent
+                    removeCursor(cursorSelector);
+                    cursorSelector.after(
+                        `<span class="ci-superscript"><span class="ci-section-root-cursor ci-has-cursor">${CI_CURSOR}</span></span><span class="ci-end-superscript">&#8203</span>`
+                    );
+                }
 
-                        $.post({
-                            url: "/calculate",
-                            data: commandData,
-                            contentType: "application/json;"
-                        }).done(response => {
-                            $(".console-container").prepend(makeCommandResultElement(response));
-                            afterRequest();
-                        });
-                    } else {
+                // commands
+                else if ((UPPER_ALPHA + LOWER_ALPHA + "_").includes(e.key)) {
+                    removeCursor(cursorSelector);
+                    cursorSelector.after(
+                        `<span class="ci-clickable ci-letter ci-has-cursor">${e.key}${CI_CURSOR}</span>`
+                    );
+
+                    updateAutocomplete(commandInputToString(selector));
+                } else if (e.key === " ") {
+                    if ( // inputting command name
+                        selector.children().last().hasClass("ci-letter") &&
+                        cursorSelector.hasClass("ci-letter") &&
+                        !selector.attr("has-command-name")
+                    ) {
+                        removeCursor(cursorSelector);
+                        cursorSelector.after(
+                            `<span class="ci-clickable ci-space ci-has-cursor">&ensp;${CI_CURSOR}</span>`
+                        );
+                        selector.attr("has-command-name", "true");
+                    }
+                } else if (e.key === ",") {
+                    if(
+                        selector.attr("has-command-name") &&
+                        !cursorSelector.hasClass("ci-space") &&
+                        !cursorSelector.hasClass("ci-comma") &&
+                        !cursorSelector.hasClass("ci-letter") &&
+                        !cursorSelector.next().hasClass("ci-space") &&
+                        !cursorSelector.next().hasClass("ci-comma") &&
+                        !cursorSelector.next().hasClass("ci-letter")
+                    ) {
+                        removeCursor(cursorSelector);
+                        cursorSelector.after(
+                            `<span class="ci-clickable ci-comma ci-has-cursor">,&ensp;${CI_CURSOR}</span>`
+                        );
+                    }
+                }
+            } else if (e.key === "Backspace") {
+                // cursor is not at the very beginning of the input
+                if (!cursorSelector.hasClass("ci-root-cursor")) {
+                    // cursor was at the beginning of a superscript
+                    if (cursorSelector.hasClass("ci-section-root-cursor")) {
+                        // move cursor outside of the superscript and add cursor
+                        addCursor(cursorSelector.parent().prev());
+                        cursorSelector.parent().remove();
+                    } else if (cursorSelector.hasClass("ci-space")) {
+                        selector.attr("has-command-name", "");
+                        addCursor(cursorSelector.prev());
+                    } else if (cursorSelector.prev().hasClass("ci-superscript")) {
+                        addCursor(cursorSelector.prev().children().last());
+                    } else addCursor(cursorSelector.prev());
+
+                    cursorSelector.remove();
+
+                    updateAutocomplete(commandInputToString(selector));
+                }
+            } else if (e.key === "Enter") {
+                let commandString = commandInputToString(selector);
+                
+                function afterRequest() {
+                    commandHistory.push(selector.html());
+
+                    historyIndex = 0;
+                    selector.html(DEFAULT_COMMAND_INPUT).attr("has-command-name", "");;
+
+                    $(".ac-suggestions").html("").hide();
+                    $(".command-description").html("");
+                    $(".loading-indicator").hide();
+
+                    updateAutocomplete("");
+                }
+
+                if (commandString.length !== 0 && $(".loading-indicator").is(":hidden")) {
+                    $(".loading-indicator").show();
+
+                    let result = parseCommandInputText(commandString);
+
+                    if (result.expr !== undefined) {
                         let exprData = JSON.stringify(result);
 
                         $.post({
@@ -211,18 +398,62 @@
                             $(".console-container").prepend(makeEvalResultElement(response));
                             afterRequest();
                         });
+                    } else {
+                        let cmdData = JSON.stringify(result);
+
+                        $.post({
+                            url: "/invoke",
+                            data: cmdData,
+                            contentType: "application/json;"
+                        }).done(response => {
+                            $(".console-container").prepend(makeCommandResultElement(response));
+                            afterRequest();
+                        });
                     }
                 }
-            } else if (e.ctrlKey && e.key === "ArrowUp") {
+            } else if (e.key === "ArrowUp" && e.ctrlKey) {
                 if (commandHistory.length > 0 && commandHistory.length + historyIndex - 1 >= 0) {
                     historyIndex--;
-                    e.target.value = commandHistory[commandHistory.length + historyIndex];
+                    selector.html(commandHistory[commandHistory.length + historyIndex]);
                 }
-            } else if (e.ctrlKey && e.key === "ArrowDown") {
+            } else if (e.key === "ArrowDown" && e.ctrlKey) {
                 if (commandHistory.length > 0 && commandHistory.length + historyIndex + 1 < commandHistory.length) {
                     historyIndex++;
-                    e.target.value = commandHistory[commandHistory.length + historyIndex];
+                    selector.html(commandHistory[commandHistory.length + historyIndex]);
                 }
+            } else if (e.key === "ArrowLeft") {
+                let prev = cursorSelector.prev();
+                if (prev.length) {
+                    if (prev.hasClass("ci-superscript")) addCursor(prev.children().last());
+                    else addCursor(prev);
+                    removeCursor(cursorSelector);
+                } else if (cursorSelector.hasClass("ci-section-root-cursor")) {
+                    addCursor(cursorSelector.parent().prev());
+                    removeCursor(cursorSelector);
+                }
+            } else if (e.key === "ArrowRight") {
+                let next = cursorSelector.next();
+                if (next.length) {
+                    if (next.hasClass("ci-superscript")) addCursor(next.children().first());
+                    else addCursor(next);
+                    removeCursor(cursorSelector);
+                } else if (cursorSelector.parent().hasClass("ci-superscript")) { // cursorSelector is the last child of a ci-superscript
+                    let parentNext = cursorSelector.parent().next();
+                    if (parentNext.length) {
+                        addCursor(parentNext);
+                        removeCursor(cursorSelector);
+                    }
+                }
+            } else if (e.key === "Tab" && acSelectionIndex !== -1) {
+                e.preventDefault();
+
+                let children = $(".ac-suggestions").children();
+                let commandName = children[acSelectionIndex].getAttribute("command-name");
+
+                removeCursor(cursorSelector);
+                selector.html(commandNameToCommandInput(commandName)).attr("has-command-name", "true");
+
+                updateAutocomplete(commandName);
             } else if (e.key == "ArrowUp" && acSelectionIndex !== -1) {
                 let children = $(".ac-suggestions").children();
                 children[acSelectionIndex].removeAttribute("id");
@@ -239,11 +470,6 @@
                 if (acSelectionIndex >= children.length) acSelectionIndex = 0;
                 children[acSelectionIndex].id = "ac-suggestion-item-selected";
                 updateDescription();
-            } else if (e.key == "Tab" && acSelectionIndex !== -1) {
-                let children = $(".ac-suggestions").children();
-                let commandName = children[acSelectionIndex].getAttribute("command-name");
-                e.target.value = commandName;
-                updateAutocomplete(commandName);
             }
         });
     })();

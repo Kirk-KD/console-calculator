@@ -1,10 +1,10 @@
 @font-face {
     font-family: math-font;
-    src: url("../font/DejaVuMathTeXGyre-Regular 400.ttf");
+    src: url("../font/HelveticaNeue-Light.ttf");
 }
 
 .math {
-    font-family: math-font;
+    font-family: math-font !important;
 }
 
 .main-container {
@@ -86,7 +86,6 @@ footer p {
 .console-container .console-element .original-command {
     margin-bottom: 1%;
     font-size: calc(11px + 0.2vw);
-    font-style: italic;
     color: rgba(var(--light-text-color), 1);
     flex-grow: 2;
 }
@@ -117,11 +116,95 @@ footer p {
     width: 45vw;
 }
 
+/* console input elements */
 .command-input-container .command-input {
     height: 100%;
     width: 100%;
     padding-left: 1.4rem !important;
+    font-size: calc(16px + 0.22vw);
+    border: 2px solid rgba(var(--default-border-color), 1);
+    border-radius: var(--default-border-radius);
+
+    display: flex;
+    align-items: stretch;
+
+    outline: none; /* to remove stupid outline */
 }
+
+.command-input-container .command-input span {
+    display: inline-flex;
+    align-items: center;
+}
+
+.ci-digit {
+
+}
+
+.ci-letter {
+    font-weight: 420;
+}
+
+.ci-clickable {
+    /* border-right: 1px solid transparent; */
+}
+
+.ci-has-cursor .ci-cursor {
+    height: 60%;
+
+    border-right: 1px solid rgba(var(--main-text-color), 1);
+    animation: cursor-blink 1s linear infinite;
+    -webkit-animation: cursor-blink 1s linear infinite;
+}
+
+@keyframes cursor-blink {
+    3% {
+        border-right: 1px solid rgba(var(--main-text-color), 1);
+    }
+    47% {
+        border-right: 1px solid rgba(var(--main-text-color), 1);
+    }
+    53% {
+        border-right: 1px solid rgba(var(--main-text-color), 0);
+    }
+    97% {
+        border-right: 1px solid rgba(var(--main-text-color), 0);
+    }
+}
+
+@-webkit-keyframes cursor-blink {
+    0% {
+        border-right: 1px solid rgba(var(--main-text-color), 1);
+    }
+    95% {
+        border-right: 1px solid rgba(var(--main-text-color), 1);
+    }
+    100% {
+        border-right: 1px solid rgba(var(--main-text-color), 0);
+    }
+}
+
+.ci-binary-op {
+    margin-left: 0.3rem;
+    margin-right: 0.3rem;
+}
+
+.ci-unary-op {
+    
+}
+
+.ci-subscript {
+    position: relative;
+    bottom: -0.5rem;
+    font-size: 0.8rem;
+}
+
+.ci-superscript {
+    position: relative;
+    top: -0.5rem;
+    font-size: 0.8rem;
+}
+
+/* end console input elements */
 
 .command-input-container .loading-indicator {
     position: absolute;

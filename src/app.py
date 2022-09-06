@@ -35,8 +35,8 @@ def eval_():
         }
 
 
-@app.route("/calculate", methods=["POST"])
-def calculate():
+@app.route("/invoke", methods=["POST"])
+def invoke():
     json = request.json
 
     command_name = json["commandName"]
