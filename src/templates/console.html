@@ -95,31 +95,6 @@
             return results;
         }
 
-        function parseInput(input) {
-            /*
-            Parse console input into a command and arguments list, or
-            into a math expression.
-            */
-
-            let inputCleaned = input.trim().toLowerCase(); // may need to keep capitalization later
-            let inputSplit = inputCleaned.split(" ");
-
-            let command = inputSplit[0];
-            if (IS_CMD_REGEX.test(command) || input === "") {
-                let argumentsText = inputSplit.length > 1 ?
-                                    inputSplit.slice(1).join(" ") :
-                                    "";
-
-                let arguments = argumentsText.split(",")
-                for (let i = 0; i < arguments.length; i++)
-                    arguments[i] = arguments[i].trim();
-
-                return {commandName: command, arguments: arguments[0] == "" ? [] : arguments};
-            } else {
-                return {expr: inputCleaned};
-            }
-        }
-
         function makeCommandResultElement(response) {
             return `<div class="console-element">
                         <hr>
@@ -243,6 +218,15 @@
             return result;
         }
 
+        function commandNameToCommandInput(commandName) {
+            let html = `<span class="ci-root-cursor"></span>`;
+            for (const c of commandName) {
+                html += `<span class="ci-clickable ci-letter">${c}</span>`;
+            }
+            html += `<span class="ci-clickable ci-space ci-has-cursor">&ensp;${CI_CURSOR}</span>`;
+            return html;
+        }
+
         function parseCommandInputText(text) {
             /* Takes the parsed string of the command input and convert it to an object. */
 
@@ -259,11 +243,11 @@
 
         $(".ac-suggestions").on("click", ".ac-suggestion-item", e => {
             let commandName = e.target.getAttribute("command-name");
-            $(".command-input").focus().val(commandName);
+            $("command-input").html(commandNameToCommandInput(commandName)).attr("has-command-name", "true");
             updateAutocomplete(commandName);
         });
 
-        $(".command-input").on("click", e => {
+        $(".command-input").focus().on("click", e => {
             e.target.focus();
 
             let jElem = $(e.target);
@@ -294,7 +278,7 @@
             let selector = $(".command-input");
             let cursorSelector = $(".ci-has-cursor");
 
-            if (e.key.length === 1) {
+            if (e.key.length === 1 && !e.ctrlKey) {
                 // math expressions
                 if (NUM_CHARS.includes(e.key)) { // Single digit
                     if (!cursorSelector.hasClass("ci-letter")) {
@@ -331,6 +315,8 @@
                     cursorSelector.after(
                         `<span class="ci-clickable ci-letter ci-has-cursor">${e.key}${CI_CURSOR}</span>`
                     );
+
+                    updateAutocomplete(commandInputToString(selector));
                 } else if (e.key === " ") {
                     if ( // inputting command name
                         selector.children().last().hasClass("ci-letter") &&
@@ -375,6 +361,8 @@
                     } else addCursor(cursorSelector.prev());
 
                     cursorSelector.remove();
+
+                    updateAutocomplete(commandInputToString(selector));
                 }
             } else if (e.key === "Enter") {
                 let commandString = commandInputToString(selector);
@@ -405,7 +393,7 @@
                     }
 
                     selector
-                        .html(`<span class="ci-root-cursor ci-has-cursor"><span class="ci-cursor">&#8203</span></span>`)
+                        .html(`<span class="ci-root-cursor ci-has-cursor">${CI_CURSOR}</span>`)
                         .attr("has-command-name", "");
                 }
             } else if (e.key === "ArrowLeft") {
@@ -431,6 +419,32 @@
                         removeCursor(cursorSelector);
                     }
                 }
+            } else if (e.key === "Tab" && acSelectionIndex !== -1) {
+                e.preventDefault();
+
+                let children = $(".ac-suggestions").children();
+                let commandName = children[acSelectionIndex].getAttribute("command-name");
+
+                removeCursor(cursorSelector);
+                selector.html(commandNameToCommandInput(commandName)).attr("has-command-name", "true");
+
+                updateAutocomplete(commandName);
+            } else if (e.key == "ArrowUp") {
+                let children = $(".ac-suggestions").children();
+                children[acSelectionIndex].removeAttribute("id");
+
+                acSelectionIndex--;
+                if (acSelectionIndex < 0) acSelectionIndex = children.length - 1;
+                children[acSelectionIndex].id = "ac-suggestion-item-selected";
+                updateDescription();
+            } else if (e.key == "ArrowDown" && acSelectionIndex !== -1) {
+                let children = $(".ac-suggestions").children();
+                children[acSelectionIndex].removeAttribute("id");
+
+                acSelectionIndex++;
+                if (acSelectionIndex >= children.length) acSelectionIndex = 0;
+                children[acSelectionIndex].id = "ac-suggestion-item-selected";
+                updateDescription();
             }
         });
     })();
