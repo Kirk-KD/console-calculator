@@ -101,7 +101,7 @@
             into a math expression.
             */
 
-            let inputCleaned = input.trim().toLowerCase();
+            let inputCleaned = input.trim().toLowerCase(); // may need to keep capitalization later
             let inputSplit = inputCleaned.split(" ");
 
             let command = inputSplit[0];
@@ -185,10 +185,6 @@
             }
         }
 
-        function generateMathHTML(input) {
-
-        }
-
         function addCursor(jquery) {
             /* Adds a cursor to the end of a ci <span>. */
 
@@ -223,7 +219,7 @@
 
             `jquery`:
                 the command-input or a child element to be parsed to 
-                string recursively.    
+                string recursively.
             */
 
             let result = "";
@@ -245,6 +241,17 @@
             });
 
             return result;
+        }
+
+        function parseCommandInputText(text) {
+            /* Takes the parsed string of the command input and convert it to an object. */
+
+            if (text.includes(" ")) {
+                let [commandName, rawArgs] = text.split(" ");
+                let args = rawArgs.split(",")
+
+                return {commandName: commandName, arguments: args};
+            } else return {expr: text};
         }
 
         // Show autocomplete items when autofocused/loaded
@@ -370,7 +377,37 @@
                     cursorSelector.remove();
                 }
             } else if (e.key === "Enter") {
-                console.log(commandInputToString(selector));
+                let commandString = commandInputToString(selector);
+                
+                if (commandString.length !== 0) {
+                    let result = parseCommandInputText(commandString);
+
+                    if (result.expr !== undefined) {
+                        let exprData = JSON.stringify(result);
+
+                        $.post({
+                            url: "/eval",
+                            data: exprData,
+                            contentType: "application/json;"
+                        }).done(response => {
+                            $(".console-container").prepend(makeEvalResultElement(response));
+                        });
+                    } else {
+                        let cmdData = JSON.stringify(result);
+
+                        $.post({
+                            url: "/invoke",
+                            data: cmdData,
+                            contentType: "application/json;"
+                        }).done(response => {
+                            $(".console-container").prepend(makeCommandResultElement(response));
+                        });
+                    }
+
+                    selector
+                        .html(`<span class="ci-root-cursor ci-has-cursor"><span class="ci-cursor">&#8203</span></span>`)
+                        .attr("has-command-name", "");
+                }
             } else if (e.key === "ArrowLeft") {
                 let prev = cursorSelector.prev();
                 if (prev.length) {

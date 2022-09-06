@@ -61,7 +61,7 @@ def superscript(n):
 
 
 def solution_set(solutions: list):
-    return "{" + ", ".join(set([iof(e) for e in solutions])) + "}"
+    return "{" + ", ".join(set([str(iof(e)) for e in solutions])) + "}"
 
 
 def error(s):

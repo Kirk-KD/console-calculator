@@ -27,6 +27,6 @@ def unparse(node):
     return ast.unparse(node).replace("**", "^")
 
 
-def eval_math(expr: str):
+def eval_math(expr: str, do_unparse: bool=True):
     node = ast.parse(expr.replace("^", "**"), mode="eval").body
-    return _eval(node), unparse(node)
+    return _eval(node), (unparse(node) if do_unparse else None)

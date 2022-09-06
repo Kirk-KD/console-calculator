@@ -86,7 +86,6 @@ footer p {
 .console-container .console-element .original-command {
     margin-bottom: 1%;
     font-size: calc(11px + 0.2vw);
-    font-style: italic;
     color: rgba(var(--light-text-color), 1);
     flex-grow: 2;
 }
