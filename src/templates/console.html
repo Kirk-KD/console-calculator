@@ -314,7 +314,7 @@
                 } else if (e.key === "^" && (NUM_CHARS + "()").includes(getText(cursorSelector))) { // Exponent
                     removeCursor(cursorSelector);
                     cursorSelector.after(
-                        `<span class="ci-superscript"><span class="ci-section-root-cursor ci-has-cursor">${CI_CURSOR}</span></span>`
+                        `<span class="ci-superscript"><span class="ci-section-root-cursor ci-has-cursor">${CI_CURSOR}</span></span><span class="ci-end-superscript">&#8203</span>`
                     );
                 }
 
@@ -373,7 +373,6 @@
                 console.log(commandInputToString(selector));
             } else if (e.key === "ArrowLeft") {
                 let prev = cursorSelector.prev();
-                console.log(prev);
                 if (prev.length) {
                     if (prev.hasClass("ci-superscript")) addCursor(prev.children().last());
                     else addCursor(prev);
@@ -393,8 +392,6 @@
                     if (parentNext.length) {
                         addCursor(parentNext);
                         removeCursor(cursorSelector);
-                    } else {
-                        // TODO
                     }
                 }
             }
