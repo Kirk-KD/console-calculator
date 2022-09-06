@@ -52,6 +52,8 @@
         */
         const CI_CURSOR = `<span class="ci-cursor">&#8203</span>`;
 
+        const DEFAULT_COMMAND_INPUT = `<span class="ci-root-cursor ci-has-cursor">${CI_CURSOR}</span>`;
+
         const UPPER_ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         const LOWER_ALPHA = UPPER_ALPHA.toLowerCase();
         const NUM_CHARS = "0123456789.";
@@ -367,7 +369,22 @@
             } else if (e.key === "Enter") {
                 let commandString = commandInputToString(selector);
                 
-                if (commandString.length !== 0) {
+                function afterRequest() {
+                    commandHistory.push(selector.html());
+
+                    historyIndex = 0;
+                    selector.html(DEFAULT_COMMAND_INPUT).attr("has-command-name", "");;
+
+                    $(".ac-suggestions").html("").hide();
+                    $(".command-description").html("");
+                    $(".loading-indicator").hide();
+
+                    updateAutocomplete("");
+                }
+
+                if (commandString.length !== 0 && $(".loading-indicator").is(":hidden")) {
+                    $(".loading-indicator").show();
+
                     let result = parseCommandInputText(commandString);
 
                     if (result.expr !== undefined) {
@@ -379,6 +396,7 @@
                             contentType: "application/json;"
                         }).done(response => {
                             $(".console-container").prepend(makeEvalResultElement(response));
+                            afterRequest();
                         });
                     } else {
                         let cmdData = JSON.stringify(result);
@@ -389,12 +407,19 @@
                             contentType: "application/json;"
                         }).done(response => {
                             $(".console-container").prepend(makeCommandResultElement(response));
+                            afterRequest();
                         });
                     }
-
-                    selector
-                        .html(`<span class="ci-root-cursor ci-has-cursor">${CI_CURSOR}</span>`)
-                        .attr("has-command-name", "");
+                }
+            } else if (e.key === "ArrowUp" && e.ctrlKey) {
+                if (commandHistory.length > 0 && commandHistory.length + historyIndex - 1 >= 0) {
+                    historyIndex--;
+                    selector.html(commandHistory[commandHistory.length + historyIndex]);
+                }
+            } else if (e.key === "ArrowDown" && e.ctrlKey) {
+                if (commandHistory.length > 0 && commandHistory.length + historyIndex + 1 < commandHistory.length) {
+                    historyIndex++;
+                    selector.html(commandHistory[commandHistory.length + historyIndex]);
                 }
             } else if (e.key === "ArrowLeft") {
                 let prev = cursorSelector.prev();
@@ -429,7 +454,7 @@
                 selector.html(commandNameToCommandInput(commandName)).attr("has-command-name", "true");
 
                 updateAutocomplete(commandName);
-            } else if (e.key == "ArrowUp") {
+            } else if (e.key == "ArrowUp" && acSelectionIndex !== -1) {
                 let children = $(".ac-suggestions").children();
                 children[acSelectionIndex].removeAttribute("id");
 
