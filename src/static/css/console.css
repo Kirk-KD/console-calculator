@@ -192,12 +192,6 @@ footer p {
     
 }
 
-.ci-subscript {
-    position: relative;
-    bottom: -0.5rem;
-    font-size: 0.8rem;
-}
-
 .ci-superscript {
     position: relative;
     top: -0.5rem;

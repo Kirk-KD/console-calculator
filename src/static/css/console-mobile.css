@@ -1,0 +1,43 @@
+@media (max-width: 1000px) {
+    .ac-suggestions {
+        display: none !important;
+    }
+
+    .main-container {
+        justify-content: start;
+    }
+
+    .console-container {
+        width: 100vw;
+        height: 60vh;
+        border: none;
+    }
+
+    .console-container .console-element .only-text .small-header {
+        margin-top: 28px;
+    }
+
+    .command-input-container {
+        width: 100vw;
+    }
+
+    .command-input-container .command-input {
+        border-radius: 0;
+        font-size: calc(24px + 1vh);
+    }
+
+    .ci-superscript {
+        position: relative;
+        top: -0.5rem;
+        font-size: calc(12px + 0.75vh);
+    }
+
+    .command-description {
+        display: none; /* temp, gonna fine somewhere else to put this */
+        font-size: calc(18px + 0.4vh);
+    }
+
+    footer {
+        display: none; /* temp */
+    }
+}
