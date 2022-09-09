@@ -1,24 +1,38 @@
 @media (max-width: 1000px) {
+    body, html {
+        height: 100%;
+        min-height: 100%;
+        max-height: 100%;
+        overflow: hidden;
+    }
+
     .ac-suggestions {
         display: none !important;
     }
 
     .main-container {
-        justify-content: start;
+        justify-content: end;
+        margin-top: 0;
     }
 
     .console-container {
         width: 100vw;
-        height: 60vh;
+        flex-grow: 1;
         border: none;
     }
 
+    .console-container .console-element .only-text {
+        font-size: 1.5rem;
+    }
+
     .console-container .console-element .only-text .small-header {
-        margin-top: 28px;
+        margin-top: 36px;
+        font-size: 3rem;
     }
 
     .command-input-container {
         width: 100vw;
+        height: 100px;
     }
 
     .command-input-container .command-input {
@@ -38,6 +52,75 @@
     }
 
     footer {
+        display: none; /* temp */
+    }
+
+    /* custom keyboard */
+
+    .keyboard-container {
+        display: block;
+        width: 100vw;
+        /* height: 25vh; */
+        border: 2px solid rgba(var(--default-border-color), 1);
+        border-top: none;
+        list-style: none;
+    }
+
+    .keyboard {
+        padding-top: 20px;
+        padding-bottom: 20px;
+    }
+
+    .keyboard .keys-row {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+
+    .keyboard .keys-row .key {
+        height: 80px;
+        margin: 5px;
+        border: 2px solid rgba(var(--default-border-color), 1);
+        border-radius: 13px;
+
+        font-size: 1.6rem;
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .keyboard-alpha {
+        /* display: none; */
+    }
+
+    .keyboard-math {
+        display: none;
+    }
+
+    .keyboard-alpha .keys-row .key {
+        width: 8.8%;
+    }
+
+    .keyboard-alpha .keys-row .key-space {
+        width: 38.5%;
+    }
+
+    .keyboard-math .keys-row .key {
+        width: 9%;
+    }
+
+    .keyboard-math .keys-row .key-spacing {
+        width: 4.5%;
+    }
+
+    .keyboard-math .keys-row .key-backspace, .keyboard-math .keys-row .key-enter {
+        width: calc(18% + 10px);
+    }
+
+    /* end custom keyboard */
+
+    .switch-theme {
         display: none; /* temp */
     }
 }
