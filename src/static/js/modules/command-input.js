@@ -36,126 +36,134 @@ function removeCursor(jquery) {
 }
 
 export const CommandInput = {
-    addCharacter: function(char, selector, cursorSelector, updateAutocompleteFn) {
+    ciSelector: undefined,
+    cursorSelector: undefined,
+    updateAutocompleteFn: undefined,
+
+    register: function(ciSelector, cursorSelector, updateAutocompleteFn) {
+        CommandInput.ciSelector = ciSelector;
+        CommandInput.cursorSelector = cursorSelector;
+        CommandInput.updateAutocompleteFn = updateAutocompleteFn;
+    },
+
+    addCharacter: function(char) {
         if (NUM_CHARS.includes(char)) { // Single digit
-            if (!cursorSelector.hasClass("ci-letter")) {
-                removeCursor(cursorSelector);
-                cursorSelector.after(
-                    `<span class="ci-clickable ci-digit ci-has-cursor">${char}${CI_CURSOR}</span>`
-                );
-            }
+            removeCursor(CommandInput.cursorSelector);
+            CommandInput.cursorSelector.after(
+                `<span class="ci-clickable ci-digit ci-has-cursor">${char}${CI_CURSOR}</span>`
+            );
         } else if (OPERATORS.includes(char)) { // Binary and Unary operators
-            removeCursor(cursorSelector);
+            removeCursor(CommandInput.cursorSelector);
 
             // the current + or - sign is an unary operator
             if ((char === "+" || char === "-") &&
-                (CONVERTED_OPERATORS.includes(getText(cursorSelector))
-                || getText(cursorSelector) === ""))
-                cursorSelector.after(
+                (CONVERTED_OPERATORS.includes(getText(CommandInput.cursorSelector))
+                || getText(CommandInput.cursorSelector) === ""))
+                CommandInput.cursorSelector.after(
                     `<span class="ci-clickable ci-unary-op ci-has-cursor">${replaceMath(char)}${CI_CURSOR}</span>`
                 );
             else {
-                cursorSelector.after(
+                CommandInput.cursorSelector.after(
                     `<span class="ci-clickable ci-binary-op ci-has-cursor">${replaceMath(char)}${CI_CURSOR}</span>`
                 );
             }
-        } else if (char === "^" && (NUM_CHARS + "()").includes(getText(cursorSelector))) { // Exponent
-            removeCursor(cursorSelector);
-            cursorSelector.after(
+        } else if (char === "^" && (NUM_CHARS + "()").includes(getText(CommandInput.cursorSelector))) { // Exponent
+            removeCursor(CommandInput.cursorSelector);
+            CommandInput.cursorSelector.after(
                 `<span class="ci-superscript"><span class="ci-section-root-cursor ci-has-cursor">${CI_CURSOR}</span></span><span class="ci-end-superscript">&#8203</span>`
             );
         }
 
         // commands
         else if ((UPPER_ALPHA + LOWER_ALPHA + "_").includes(char)) {
-            removeCursor(cursorSelector);
-            cursorSelector.after(
+            removeCursor(CommandInput.cursorSelector);
+            CommandInput.cursorSelector.after(
                 `<span class="ci-clickable ci-letter ci-has-cursor">${char}${CI_CURSOR}</span>`
             );
 
-            updateAutocompleteFn(commandInputToString(selector));
+            CommandInput.updateAutocompleteFn(commandInputToString(CommandInput.ciSelector));
         } else if (char === " ") {
             if ( // inputting command name
-                selector.children().last().hasClass("ci-letter") &&
-                cursorSelector.hasClass("ci-letter") &&
-                !selector.attr("has-command-name")
+                CommandInput.ciSelector.children().last().hasClass("ci-letter") &&
+                CommandInput.cursorSelector.hasClass("ci-letter") &&
+                !CommandInput.ciSelector.attr("has-command-name")
             ) {
-                removeCursor(cursorSelector);
-                cursorSelector.after(
+                removeCursor(CommandInput.cursorSelector);
+                CommandInput.cursorSelector.after(
                     `<span class="ci-clickable ci-space ci-has-cursor">&ensp;${CI_CURSOR}</span>`
                 );
-                selector.attr("has-command-name", "true");
+                CommandInput.ciSelector.attr("has-command-name", "true");
             }
         } else if (char === ",") {
             if(
-                selector.attr("has-command-name") &&
-                !cursorSelector.hasClass("ci-space") &&
-                !cursorSelector.hasClass("ci-comma") &&
-                !cursorSelector.hasClass("ci-letter") &&
-                !cursorSelector.next().hasClass("ci-space") &&
-                !cursorSelector.next().hasClass("ci-comma") &&
-                !cursorSelector.next().hasClass("ci-letter")
+                CommandInput.ciSelector.attr("has-command-name") &&
+                !CommandInput.cursorSelector.hasClass("ci-space") &&
+                !CommandInput.cursorSelector.hasClass("ci-comma") &&
+                !CommandInput.cursorSelector.hasClass("ci-letter") &&
+                !CommandInput.cursorSelector.next().hasClass("ci-space") &&
+                !CommandInput.cursorSelector.next().hasClass("ci-comma") &&
+                !CommandInput.cursorSelector.next().hasClass("ci-letter")
             ) {
                 removeCursor(cursorSelector);
-                cursorSelector.after(
+                CommandInput.cursorSelector.after(
                     `<span class="ci-clickable ci-comma ci-has-cursor">,&ensp;${CI_CURSOR}</span>`
                 );
             }
         }
     },
-    backspace: function(selector, cursorSelector, updateAutocompleteFn) {
+    backspace: function() {
         // cursor is not at the very beginning of the input
-        if (!cursorSelector.hasClass("ci-root-cursor")) {
+        if (!CommandInput.cursorSelector.hasClass("ci-root-cursor")) {
             // cursor was at the beginning of a superscript
-            if (cursorSelector.hasClass("ci-section-root-cursor")) {
+            if (CommandInput.cursorSelector.hasClass("ci-section-root-cursor")) {
                 // move cursor outside of the superscript and add cursor
-                addCursor(cursorSelector.parent().prev());
-                cursorSelector.parent().remove();
-            } else if (cursorSelector.hasClass("ci-space")) {
-                selector.attr("has-command-name", "");
-                addCursor(cursorSelector.prev());
-            } else if (cursorSelector.prev().hasClass("ci-superscript")) {
-                addCursor(cursorSelector.prev().children().last());
-            } else addCursor(cursorSelector.prev());
+                addCursor(CommandInput.cursorSelector.parent().prev());
+                CommandInput.cursorSelector.parent().remove();
+            } else if (CommandInput.cursorSelector.hasClass("ci-space")) {
+                CommandInput.ciSelector.attr("has-command-name", "");
+                addCursor(CommandInput.cursorSelector.prev());
+            } else if (CommandInput.cursorSelector.prev().hasClass("ci-superscript")) {
+                addCursor(CommandInput.cursorSelector.prev().children().last());
+            } else addCursor(CommandInput.cursorSelector.prev());
 
-            cursorSelector.remove();
+            CommandInput.cursorSelector.remove();
 
-            updateAutocompleteFn(commandInputToString(selector));
+            CommandInput.updateAutocompleteFn(commandInputToString(CommandInput.ciSelector));
         }
     },
-    cursorRight: function(cursorSelector) {
-        let next = cursorSelector.next();
+    cursorRight: function() {
+        let next = CommandInput.cursorSelector.next();
         if (next.length) {
             if (next.hasClass("ci-superscript")) addCursor(next.children().first());
             else addCursor(next);
-            removeCursor(cursorSelector);
-        } else if (cursorSelector.parent().hasClass("ci-superscript")) { // cursorSelector is the last child of a ci-superscript
-            let parentNext = cursorSelector.parent().next();
+            removeCursor(CommandInput.cursorSelector);
+        } else if (CommandInput.cursorSelector.parent().hasClass("ci-superscript")) { // cursorSelector is the last child of a ci-superscript
+            let parentNext = CommandInput.cursorSelector.parent().next();
             if (parentNext.length) {
                 addCursor(parentNext);
-                removeCursor(cursorSelector);
+                removeCursor(CommandInput.cursorSelector);
             }
         }
     },
-    cursorLeft: function(cursorSelector) {
-        let prev = cursorSelector.prev();
+    cursorLeft: function() {
+        let prev = CommandInput.cursorSelector.prev();
         if (prev.length) {
             if (prev.hasClass("ci-superscript")) addCursor(prev.children().last());
             else addCursor(prev);
-            removeCursor(cursorSelector);
-        } else if (cursorSelector.hasClass("ci-section-root-cursor")) {
-            addCursor(cursorSelector.parent().prev());
-            removeCursor(cursorSelector);
+            removeCursor(CommandInput.cursorSelector);
+        } else if (CommandInput.cursorSelector.hasClass("ci-section-root-cursor")) {
+            addCursor(CommandInput.cursorSelector.parent().prev());
+            removeCursor(CommandInput.cursorSelector);
         }
     },
-    autocomplete: function(selector, cursorSelector, acSelectionIndex, updateAutocompleteFn) {
+    autocomplete: function(acSelectionIndex) {
         let children = $(".ac-suggestions").children();
         let commandName = children[acSelectionIndex].getAttribute("command-name");
 
-        removeCursor(cursorSelector);
-        selector.html(commandNameToCommandInput(commandName)).attr("has-command-name", "true");
+        removeCursor(CommandInput.cursorSelector);
+        CommandInput.ciSelector.html(commandNameToCommandInput(commandName)).attr("has-command-name", "true");
 
-        updateAutocompleteFn(commandName);
+        CommandInput.updateAutocompleteFn(commandName);
     },
 
     moveCursorBeginOrEnd: function(e) {

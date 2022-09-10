@@ -1,5 +1,12 @@
 import { CommandInput } from "./modules/command-input.js";
-import { commandInputToString } from "./modules/utilities.js";
+import {
+    commandInputToString,
+    getText,
+    makeAutocompleteItems,
+    makeCommandResultElement,
+    makeEvalResultElement,
+    parseCommandInputText
+} from "./modules/utilities.js";
 import { DEFAULT_COMMAND_INPUT } from "./modules/constants.js";
 
 var commandHistory = [];
@@ -43,33 +50,6 @@ function searchCommands(query, limit) {
     return results;
 }
 
-function makeCommandResultElement(response) {
-    return `<div class="console-element">
-                <hr>
-                <div class="original-command math">
-                    <span class="command-name">${response.commandName}</span> ${response.parsedArgs}
-                </div>
-                <span class="command-result math">${response.commandResult}</span>
-            </div>`;
-}
-
-function makeEvalResultElement(response) {
-    return `<div class="console-element">
-                <hr>
-                <div class="original-expr math">${response.originalExpr}</div>
-                <span class="command-result math">${response.result}</span>
-            </div>`
-}
-
-function makeAutocompleteItems(searchResults) {
-    let result = "";
-    for (const [name, parsedArgs] of Object.entries(searchResults)) {
-        result = `<div class="ac-suggestion-item" command-name="${name}">${name} 
-            <span class="ac-args">${parsedArgs}</span></div>` + result;
-    }
-    return result;
-}
-
 function updateAutocomplete(commandName) {
     let searchResults = searchCommands(commandName, 10);
     let resultsLength = Object.keys(searchResults).length;
@@ -90,17 +70,6 @@ function updateDescription() {
     $(".command-description").html(commandsInfo[commandName].description || "");
 }
 
-function parseCommandInputText(text) {
-    /* Takes the parsed string of the command input and convert it to an object. */
-
-    if (text.includes(" ")) {
-        let [commandName, rawArgs] = text.split(" ");
-        let args = rawArgs.split(",")
-
-        return {commandName: commandName, arguments: args};
-    } else return {expr: text};
-}
-
 // Show autocomplete items when autofocused/loaded
 updateAutocomplete("");
 
@@ -118,23 +87,25 @@ $(".command-input").focus().on("click", e => {
 }).on("click", ".ci-clickable", e => {
     CommandInput.moveCursorToCharacterClicked(e);
 }).on("keydown", e => {
-    let selector = $(".command-input");
+    let ciSelector = $(".command-input");
     let cursorSelector = $(".ci-has-cursor");
+
+    CommandInput.register(ciSelector, cursorSelector, updateAutocomplete);
 
     if (e.key === "Tab") e.preventDefault();
 
     if (e.key.length === 1 && !e.ctrlKey) {
-        CommandInput.addCharacter(e.key, selector, cursorSelector, updateAutocomplete);
+        CommandInput.addCharacter(e.key);
     } else if (e.key === "Backspace") {
-        CommandInput.backspace(selector, cursorSelector, updateAutocomplete);
+        CommandInput.backspace();
     } else if (e.key === "Enter") {
-        let commandString = commandInputToString(selector);
+        let commandString = commandInputToString(ciSelector);
         
         function afterRequest() {
-            commandHistory.push(selector.html());
+            commandHistory.push(ciSelector.html());
 
             historyIndex = 0;
-            selector.html(DEFAULT_COMMAND_INPUT).attr("has-command-name", "");;
+            ciSelector.html(DEFAULT_COMMAND_INPUT).attr("has-command-name", "");;
 
             $(".ac-suggestions").html("").hide();
             $(".command-description").html("");
@@ -175,19 +146,19 @@ $(".command-input").focus().on("click", e => {
     } else if (e.key === "ArrowUp" && e.ctrlKey) {
         if (commandHistory.length > 0 && commandHistory.length + historyIndex - 1 >= 0) {
             historyIndex--;
-            selector.html(commandHistory[commandHistory.length + historyIndex]);
+            ciSelector.html(commandHistory[commandHistory.length + historyIndex]);
         }
     } else if (e.key === "ArrowDown" && e.ctrlKey) {
         if (commandHistory.length > 0 && commandHistory.length + historyIndex + 1 < commandHistory.length) {
             historyIndex++;
-            selector.html(commandHistory[commandHistory.length + historyIndex]);
+            ciSelector.html(commandHistory[commandHistory.length + historyIndex]);
         }
     } else if (e.key === "ArrowLeft") {
-        CommandInput.cursorLeft(cursorSelector);
+        CommandInput.cursorLeft();
     } else if (e.key === "ArrowRight") {
-        CommandInput.cursorRight(cursorSelector);
+        CommandInput.cursorRight();
     } else if (e.key === "Tab" && acSelectionIndex !== -1) {
-        CommandInput.autocomplete(selector, cursorSelector, acSelectionIndex, updateAutocomplete);
+        CommandInput.autocomplete(acSelectionIndex);
     } else if (e.key == "ArrowUp" && acSelectionIndex !== -1) {
         let children = $(".ac-suggestions").children();
         children[acSelectionIndex].removeAttribute("id");
@@ -204,5 +175,34 @@ $(".command-input").focus().on("click", e => {
         if (acSelectionIndex >= children.length) acSelectionIndex = 0;
         children[acSelectionIndex].id = "ac-suggestion-item-selected";
         updateDescription();
+    }
+});
+
+$(".key").on("tap", function(e) {
+    $(this).trigger("click");
+    e.preventDefault();
+    return false;
+}).on("click", function(e) {
+    let key = $(this);
+    let ciSelector = $(".command-input");
+    let cursorSelector = $(".ci-has-cursor");
+
+    CommandInput.register(ciSelector, cursorSelector, updateAutocomplete);
+
+    if (
+        key.hasClass("key-letter") || key.hasClass("key-number") ||
+        key.hasClass("key-op") || key.hasClass("key-comma")
+    ) CommandInput.addCharacter(getText(key).toLowerCase());
+    else if (key.hasClass("key-space")) CommandInput.addCharacter(" ");
+    else if (key.hasClass("key-underscore")) CommandInput.addCharacter("_");
+    else if (key.hasClass("key-backspace")) CommandInput.backspace();
+    else if (key.hasClass("key-switch")) {
+        if ($(".keyboard-alpha").is(":hidden")) {
+            $(".keyboard-alpha").show();
+            $(".keyboard-math").hide();
+        } else {
+            $(".keyboard-alpha").hide();
+            $(".keyboard-math").show();
+        }
     }
 });

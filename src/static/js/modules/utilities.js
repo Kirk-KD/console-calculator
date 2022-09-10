@@ -63,3 +63,41 @@ export function commandNameToCommandInput(commandName) {
     html += `<span class="ci-clickable ci-space ci-has-cursor">&ensp;${CI_CURSOR}</span>`;
     return html;
 }
+
+export function makeCommandResultElement(response) {
+    return `<div class="console-element">
+                <hr>
+                <div class="original-command math">
+                    <span class="command-name">${response.commandName}</span> ${response.parsedArgs}
+                </div>
+                <span class="command-result math">${response.commandResult}</span>
+            </div>`;
+}
+
+export function makeEvalResultElement(response) {
+    return `<div class="console-element">
+                <hr>
+                <div class="original-expr math">${response.originalExpr}</div>
+                <span class="command-result math">${response.result}</span>
+            </div>`
+}
+
+export function makeAutocompleteItems(searchResults) {
+    let result = "";
+    for (const [name, parsedArgs] of Object.entries(searchResults)) {
+        result = `<div class="ac-suggestion-item" command-name="${name}">${name} 
+            <span class="ac-args">${parsedArgs}</span></div>` + result;
+    }
+    return result;
+}
+
+export function parseCommandInputText(text) {
+    /* Takes the parsed string of the command input and convert it to an object. */
+
+    if (text.includes(" ")) {
+        let [commandName, rawArgs] = text.split(" ");
+        let args = rawArgs.split(",")
+
+        return {commandName: commandName, arguments: args};
+    } else return {expr: text};
+}
