@@ -70,6 +70,53 @@ function updateDescription() {
     $(".command-description").html(commandsInfo[commandName].description || "");
 }
 
+function onPressEnter(ciSelector) {
+    let commandString = commandInputToString(ciSelector);
+        
+    function afterRequest() {
+        commandHistory.push(ciSelector.html());
+
+        historyIndex = 0;
+        ciSelector.html(DEFAULT_COMMAND_INPUT).attr("has-command-name", "");
+
+        $(".ac-suggestions").html("").hide();
+        $(".command-description").html("");
+        $(".loading-indicator").hide();
+
+        updateAutocomplete("");
+    }
+
+    if (commandString.length !== 0 && $(".loading-indicator").is(":hidden")) {
+        $(".loading-indicator").show();
+
+        let result = parseCommandInputText(commandString);
+
+        if (result.expr !== undefined) {
+            let exprData = JSON.stringify(result);
+
+            $.post({
+                url: "/eval",
+                data: exprData,
+                contentType: "application/json;"
+            }).done(response => {
+                $(".console-container").prepend(makeEvalResultElement(response));
+                afterRequest();
+            });
+        } else {
+            let cmdData = JSON.stringify(result);
+
+            $.post({
+                url: "/invoke",
+                data: cmdData,
+                contentType: "application/json;"
+            }).done(response => {
+                $(".console-container").prepend(makeCommandResultElement(response));
+                afterRequest();
+            });
+        }
+    }
+}
+
 // Show autocomplete items when autofocused/loaded
 updateAutocomplete("");
 
@@ -99,50 +146,7 @@ $(".command-input").focus().on("click", e => {
     } else if (e.key === "Backspace") {
         CommandInput.backspace();
     } else if (e.key === "Enter") {
-        let commandString = commandInputToString(ciSelector);
-        
-        function afterRequest() {
-            commandHistory.push(ciSelector.html());
-
-            historyIndex = 0;
-            ciSelector.html(DEFAULT_COMMAND_INPUT).attr("has-command-name", "");;
-
-            $(".ac-suggestions").html("").hide();
-            $(".command-description").html("");
-            $(".loading-indicator").hide();
-
-            updateAutocomplete("");
-        }
-
-        if (commandString.length !== 0 && $(".loading-indicator").is(":hidden")) {
-            $(".loading-indicator").show();
-
-            let result = parseCommandInputText(commandString);
-
-            if (result.expr !== undefined) {
-                let exprData = JSON.stringify(result);
-
-                $.post({
-                    url: "/eval",
-                    data: exprData,
-                    contentType: "application/json;"
-                }).done(response => {
-                    $(".console-container").prepend(makeEvalResultElement(response));
-                    afterRequest();
-                });
-            } else {
-                let cmdData = JSON.stringify(result);
-
-                $.post({
-                    url: "/invoke",
-                    data: cmdData,
-                    contentType: "application/json;"
-                }).done(response => {
-                    $(".console-container").prepend(makeCommandResultElement(response));
-                    afterRequest();
-                });
-            }
-        }
+        onPressEnter(ciSelector);
     } else if (e.key === "ArrowUp" && e.ctrlKey) {
         if (commandHistory.length > 0 && commandHistory.length + historyIndex - 1 >= 0) {
             historyIndex--;
@@ -196,6 +200,7 @@ $(".key").on("tap", function(e) {
     else if (key.hasClass("key-space")) CommandInput.addCharacter(" ");
     else if (key.hasClass("key-underscore")) CommandInput.addCharacter("_");
     else if (key.hasClass("key-backspace")) CommandInput.backspace();
+    else if (key.hasClass("key-enter")) onPressEnter(ciSelector);
     else if (key.hasClass("key-switch")) {
         if ($(".keyboard-alpha").is(":hidden")) {
             $(".keyboard-alpha").show();

@@ -45,7 +45,7 @@ footer p {
 
     height: 80vh;
     width: 45vw;
-    margin-bottom: 1.5vh;
+    /* margin-bottom: 1.5vh; */
 }
 
 .console-container::-webkit-scrollbar {
@@ -92,7 +92,6 @@ footer p {
     margin-bottom: 1%;
     font-size: calc(11px + 0.2vw);
     color: rgba(var(--light-text-color), 1);
-    flex-grow: 2;
 }
 
 .console-container .console-element .original-expr {

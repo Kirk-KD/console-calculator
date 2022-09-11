@@ -104,7 +104,7 @@ export const CommandInput = {
                 !CommandInput.cursorSelector.next().hasClass("ci-comma") &&
                 !CommandInput.cursorSelector.next().hasClass("ci-letter")
             ) {
-                removeCursor(cursorSelector);
+                removeCursor(CommandInput.cursorSelector);
                 CommandInput.cursorSelector.after(
                     `<span class="ci-clickable ci-comma ci-has-cursor">,&ensp;${CI_CURSOR}</span>`
                 );

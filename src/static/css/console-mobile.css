@@ -34,6 +34,18 @@
         font-size: 3rem;
     }
 
+    .console-container .console-element .original-command {
+        font-size: 32px;
+    }
+    
+    .console-container .console-element .original-expr {
+        font-size: 32px;
+    }
+
+    .console-container .console-element .command-result {
+        font-size: 46px;
+    }
+
     .command-input-container {
         width: 100vw;
         height: 100px;
@@ -98,10 +110,6 @@
         -khtml-user-select: none;
         -webkit-user-select: none;
         -o-user-select: none;
-    }
-
-    .keyboard-alpha {
-        /* display: none; */
     }
 
     .keyboard-math {
