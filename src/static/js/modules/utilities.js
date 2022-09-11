@@ -69,6 +69,7 @@ export function stringToMath(string, startingIndex = 0, useEndingBracket = false
                 result += res.result;
                 index = res.endIndex;
             } else {
+                index++;
                 while (NUM_CHARS.includes(cleanString[index])) {
                     result += `<span class="ci-digit">${cleanString[index]}</span>`;
                     index++;

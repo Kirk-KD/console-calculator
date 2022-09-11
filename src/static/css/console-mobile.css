@@ -58,8 +58,14 @@
 
     .ci-superscript {
         position: relative;
+        top: -12px;
+        font-size: 12px;
+    }
+
+    .command-input .ci-superscript {
+        position: relative;
         top: -9px;
-        font-size: 24px;
+        font-size: 24px !important;
     }
 
     .command-description {
