@@ -117,6 +117,20 @@ function onPressEnter(ciSelector) {
     }
 }
 
+function onPressHistoryUp(ciSelector) {
+    if (commandHistory.length > 0 && commandHistory.length + historyIndex - 1 >= 0) {
+        historyIndex--;
+        ciSelector.html(commandHistory[commandHistory.length + historyIndex]);
+    }
+}
+
+function onPressHistoryDown(ciSelector) {
+    if (commandHistory.length > 0 && commandHistory.length + historyIndex + 1 < commandHistory.length) {
+        historyIndex++;
+        ciSelector.html(commandHistory[commandHistory.length + historyIndex]);
+    }
+}
+
 // Show autocomplete items when autofocused/loaded
 updateAutocomplete("");
 
@@ -148,15 +162,9 @@ $(".command-input").focus().on("click", e => {
     } else if (e.key === "Enter") {
         onPressEnter(ciSelector);
     } else if (e.key === "ArrowUp" && e.ctrlKey) {
-        if (commandHistory.length > 0 && commandHistory.length + historyIndex - 1 >= 0) {
-            historyIndex--;
-            ciSelector.html(commandHistory[commandHistory.length + historyIndex]);
-        }
+        onPressHistoryUp(ciSelector);
     } else if (e.key === "ArrowDown" && e.ctrlKey) {
-        if (commandHistory.length > 0 && commandHistory.length + historyIndex + 1 < commandHistory.length) {
-            historyIndex++;
-            ciSelector.html(commandHistory[commandHistory.length + historyIndex]);
-        }
+        onPressHistoryDown(ciSelector);
     } else if (e.key === "ArrowLeft") {
         CommandInput.cursorLeft();
     } else if (e.key === "ArrowRight") {
@@ -209,5 +217,6 @@ $(".key").on("tap", function(e) {
             $(".keyboard-alpha").hide();
             $(".keyboard-math").show();
         }
-    }
+    } else if (key.hasClass("key-history-up")) onPressHistoryUp(ciSelector);
+    else if (key.hasClass("key-history-down")) onPressHistoryDown(ciSelector);
 });
