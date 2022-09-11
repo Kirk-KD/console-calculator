@@ -140,16 +140,8 @@ footer p {
     align-items: center;
 }
 
-.ci-digit {
-
-}
-
 .ci-letter {
     font-weight: 420;
-}
-
-.ci-clickable {
-    /* border-right: 1px solid transparent; */
 }
 
 .ci-has-cursor .ci-cursor {
@@ -191,12 +183,18 @@ footer p {
 }
 
 .ci-binary-op {
-    margin-left: 0.3rem;
-    margin-right: 0.3rem;
+    margin-left: 8px;
+    margin-right: 8px;
 }
 
-.ci-unary-op {
-    
+.ci-superscript .ci-binary-op {
+    margin-left: 6px;
+    margin-right: 6px;
+}
+
+.ci-bracket-left, .ci-bracket-right {
+    margin-left: 6px;
+    margin-right: 6px;
 }
 
 .ci-superscript {

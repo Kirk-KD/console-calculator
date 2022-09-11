@@ -26,6 +26,8 @@ export function commandInputToString(jquery) {
         else if (child.hasClass("ci-comma")) result += ",";
         else if (child.hasClass("ci-superscript"))
             result += `**(${commandInputToString(child)})`;
+        else if (child.hasClass("ci-bracket-left")) result += "(";
+        else if (child.hasClass("ci-bracket-right")) result += ")";
     });
 
     return result;

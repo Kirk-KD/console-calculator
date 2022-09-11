@@ -72,7 +72,7 @@ function updateDescription() {
 
 function onPressEnter(ciSelector) {
     let commandString = commandInputToString(ciSelector);
-        
+    
     function afterRequest() {
         commandHistory.push(ciSelector.html());
 
@@ -203,7 +203,8 @@ $(".key").on("tap", function(e) {
 
     if (
         key.hasClass("key-letter") || key.hasClass("key-number") ||
-        key.hasClass("key-op") || key.hasClass("key-comma")
+        key.hasClass("key-op") || key.hasClass("key-comma") ||
+        key.hasClass("key-bracket-left") || key.hasClass("key-bracket-right")
     ) CommandInput.addCharacter(getText(key).toLowerCase());
     else if (key.hasClass("key-space")) CommandInput.addCharacter(" ");
     else if (key.hasClass("key-underscore")) CommandInput.addCharacter("_");
@@ -219,4 +220,6 @@ $(".key").on("tap", function(e) {
         }
     } else if (key.hasClass("key-history-up")) onPressHistoryUp(ciSelector);
     else if (key.hasClass("key-history-down")) onPressHistoryDown(ciSelector);
+    else if (key.hasClass("key-left")) CommandInput.cursorLeft();
+    else if (key.hasClass("key-right")) CommandInput.cursorRight();
 });

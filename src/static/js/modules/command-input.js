@@ -72,6 +72,16 @@ export const CommandInput = {
             CommandInput.cursorSelector.after(
                 `<span class="ci-superscript"><span class="ci-section-root-cursor ci-has-cursor">${CI_CURSOR}</span></span><span class="ci-end-superscript">&#8203</span>`
             );
+        } else if (char === "(") {
+            removeCursor(CommandInput.cursorSelector);
+            CommandInput.cursorSelector.after(
+                `<span class="ci-clickable ci-bracket-left ci-has-cursor">(${CI_CURSOR}</span>`
+            );
+        } else if (char === ")") {
+            removeCursor(CommandInput.cursorSelector);
+            CommandInput.cursorSelector.after(
+                `<span class="ci-clickable ci-bracket-right ci-has-cursor">)${CI_CURSOR}</span>`
+            );
         }
 
         // commands
