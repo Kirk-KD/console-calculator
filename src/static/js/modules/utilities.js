@@ -1,4 +1,11 @@
-import { CI_CURSOR } from "./constants.js";
+import {
+    CI_CURSOR,
+    CONVERTED_OPERATORS,
+    NUM_CHARS,
+    OPERATORS,
+    UPPER_ALPHA,
+    LOWER_ALPHA
+} from "./constants.js";
 
 export function commandInputToString(jquery) {
     /*
@@ -31,6 +38,60 @@ export function commandInputToString(jquery) {
     });
 
     return result;
+}
+
+export function stringToMath(string, startingIndex = 0, useEndingBracket = false) {
+    /*
+    Converts a string to a ci element.
+    */
+
+    let result = "";
+    let cleanString = string.replaceAll(" ", "").replaceAll("**", "^");
+
+    let leftBracket = 1, rightBracket = 0;
+
+    let index = startingIndex;
+    while (index < cleanString.length) {
+        let char = cleanString[index];
+
+        if (NUM_CHARS.includes(char))
+            result += `<span class="ci-digit">${char}</span>`;
+        else if (OPERATORS.includes(char)) {
+            if (("+-".includes(char)) &&
+                (CONVERTED_OPERATORS.includes(cleanString[index - 1]) || index === 0))
+                result += `<span class="ci-unary-op">${replaceMath(char)}</span>`;
+            else
+                result += `<span class="ci-binary-op">${replaceMath(char)}</span>`;
+        } else if (char === "^") {
+            result += `<span class="ci-superscript"><span class="ci-section-root-cursor"></span>`;
+            if (cleanString[index + 1] === "(") {
+                let res = stringToMath(cleanString, index + 2, true);
+                result += res.result;
+                index = res.endIndex;
+            } else {
+                while (NUM_CHARS.includes(cleanString[index])) {
+                    result += `<span class="ci-digit">${cleanString[index]}</span>`;
+                    index++;
+                }
+                index--;
+            }
+            result += `</span><span class="ci-end-superscript">&#8203</span>`;
+        } else if (char === "(") {
+            leftBracket++;
+            result += `<span class="ci-bracket-left">(</span>`;
+        } else if (char === ")") {
+            rightBracket++;
+            if (useEndingBracket && rightBracket === leftBracket) break;
+            result += `<span class="ci-bracket-right">)</span>`;
+        }
+
+        index++;
+    }
+
+    return {
+        result: result,
+        endIndex: index + 1
+    };
 }
 
 export function getText(jquery) {
@@ -79,7 +140,7 @@ export function makeCommandResultElement(response) {
 export function makeEvalResultElement(response) {
     return `<div class="console-element">
                 <hr>
-                <div class="original-expr math">${response.originalExpr}</div>
+                <div class="original-expr math">${stringToMath(response.originalExpr).result}</div>
                 <span class="command-result math">${response.result}</span>
             </div>`
 }

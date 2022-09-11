@@ -35,11 +35,11 @@
     }
 
     .console-container .console-element .original-command {
-        font-size: 32px;
+        font-size: 28px;
     }
     
     .console-container .console-element .original-expr {
-        font-size: 32px;
+        font-size: 28px;
     }
 
     .console-container .console-element .command-result {
@@ -53,13 +53,13 @@
 
     .command-input-container .command-input {
         border-radius: 0;
-        font-size: calc(24px + 1vh);
+        font-size: 46px;
     }
 
     .ci-superscript {
         position: relative;
-        top: -0.5rem;
-        font-size: calc(12px + 0.75vh);
+        top: -9px;
+        font-size: 24px;
     }
 
     .command-description {

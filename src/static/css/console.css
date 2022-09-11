@@ -192,15 +192,15 @@ footer p {
     margin-right: 6px;
 }
 
+.ci-superscript {
+    position: relative;
+    top: -9px;
+    font-size: 12px;
+}
+
 .ci-bracket-left, .ci-bracket-right {
     margin-left: 6px;
     margin-right: 6px;
-}
-
-.ci-superscript {
-    position: relative;
-    top: -0.5rem;
-    font-size: 0.8rem;
 }
 
 /* end console input elements */
