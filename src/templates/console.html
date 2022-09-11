@@ -2,6 +2,7 @@
 
 {% block css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/console.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/console-mobile.css') }}">
 {% endblock %}
 
 {% block body %}
@@ -29,6 +30,104 @@
         </div>
         <div class="ms-loading loading-indicator"></div>
     </div>
+    <div class="keyboard-container">
+        <div class="keyboard keyboard-alpha">
+            <div class="keys-row">
+                <span class="key key-letter">Q</span>
+                <span class="key key-letter">W</span>
+                <span class="key key-letter">E</span>
+                <span class="key key-letter">R</span>
+                <span class="key key-letter">T</span>
+                <span class="key key-letter">Y</span>
+                <span class="key key-letter">U</span>
+                <span class="key key-letter">I</span>
+                <span class="key key-letter">O</span>
+                <span class="key key-letter">P</span>
+            </div>
+            <div class="keys-row">
+                <span class="key key-letter">A</span>
+                <span class="key key-letter">S</span>
+                <span class="key key-letter">D</span>
+                <span class="key key-letter">F</span>
+                <span class="key key-letter">G</span>
+                <span class="key key-letter">H</span>
+                <span class="key key-letter">J</span>
+                <span class="key key-letter">K</span>
+                <span class="key key-letter">L</span>
+            </div>
+            <div class="keys-row">
+                <span class="key key-letter">Z</span>
+                <span class="key key-letter">X</span>
+                <span class="key key-letter">C</span>
+                <span class="key key-letter">V</span>
+                <span class="key key-letter">B</span>
+                <span class="key key-letter">N</span>
+                <span class="key key-letter">M</span>
+                <span class="key key-backspace">Del</span>
+            </div>
+            <div class="keys-row">
+                <span class="key key-switch">Switch</span>
+                <span class="key key-history-up">H↑</span>
+                <span class="key key-history-down">H↓</span>
+                <span class="key key-space">Space</span>
+                <span class="key key-underscore">_</span>
+                <span class="key key-left">←</span>
+                <span class="key key-right">→</span>
+            </div>
+        </div>
+        <div class="keyboard keyboard-math">
+            <div class="keys-row">
+                <span class="key key-squared">^2</span>
+                <span class="key key-op">^</span>
+                <span class="key key-abs">|a|</span>
+                <span class="key-spacing"></span>
+                <span class="key key-number">7</span>
+                <span class="key key-number">8</span>
+                <span class="key key-number">9</span>
+                <span class="key key-op">/</span>
+                <span class="key-spacing"></span>
+                <span class="key key-history-up">H↑</span>
+                <span class="key key-history-down">H↓</span>
+            </div>
+            <div class="keys-row">
+                <span class="key key-sqrt">sqrt</span>
+                <span class="key key-placeholder"></span>
+                <span class="key key-pi">PI</span>
+                <span class="key-spacing"></span>
+                <span class="key key-number">4</span>
+                <span class="key key-number">5</span>
+                <span class="key key-number">6</span>
+                <span class="key key-op">*</span>
+                <span class="key-spacing"></span>
+                <span class="key key-left">←</span>
+                <span class="key key-right">→</span>
+            </div>
+            <div class="keys-row">
+                <span class="key key-placeholder"></span>
+                <span class="key key-placeholder"></span>
+                <span class="key key-placeholder"></span>
+                <span class="key-spacing"></span>
+                <span class="key key-number">1</span>
+                <span class="key key-number">2</span>
+                <span class="key key-number">3</span>
+                <span class="key key-op">-</span>
+                <span class="key-spacing"></span>
+                <span class="key key-backspace">Del</span>
+            </div>
+            <div class="keys-row">
+                <span class="key key-switch">Switch</span>
+                <span class="key key-bracket-left">(</span>
+                <span class="key key-bracket-right">)</span>
+                <span class="key-spacing"></span>
+                <span class="key key-number">.</span>
+                <span class="key key-number">0</span>
+                <span class="key key-comma">,</span>
+                <span class="key key-op">+</span>
+                <span class="key-spacing"></span>
+                <span class="key key-enter">Enter</span>
+            </div>
+        </div>
+    </div>
     <div class="ac-suggestions"></div>
     <div class="command-description"></div>
 </div>
@@ -37,441 +136,5 @@
     <p>Copyright - All rights reserved - &copy;<b>Kirk_KD</b> - <a href="https://github.com/Kirk-KD/console-calculator">Github</a></p>
 </footer>
 
-<script>
-    (() => {
-        var commandHistory = [];
-        var historyIndex = 0;
-        var acSelectionIndex = -1;
-
-        const IS_CMD_REGEX = /[a-z_]/i;
-
-        /*
-        CI_CURSOR should be used as a child of a non-container ci-type such as
-        a ci-digit, and NOT a ci-superscript. The purpose of CI_CURSOR is only
-        to display the blinking cursor correctly.
-        */
-        const CI_CURSOR = `<span class="ci-cursor">&#8203</span>`;
-
-        const DEFAULT_COMMAND_INPUT = `<span class="ci-root-cursor ci-has-cursor">${CI_CURSOR}</span>`;
-
-        const UPPER_ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        const LOWER_ALPHA = UPPER_ALPHA.toLowerCase();
-        const NUM_CHARS = "0123456789.";
-        const OPERATORS = "+-*/";
-        const CONVERTED_OPERATORS = "+−×÷";
-
-        $(".ac-suggestions").hide();
-        $(".loading-indicator").hide();
-
-        var commandsInfo;
-        var helpHTML;
-        $.post({
-            url: "/load_commands",
-            async: false // blocking because must get `commandsInfo` for other code to work
-        }).done(response => {
-            commandsInfo = response;
-
-            // generate HTML for help command
-            let helpHTMLs = [];
-            for (const [name, command] of Object.entries(commandsInfo)) {
-                helpHTMLs.push(command.helpHTML);
-            }
-            helpHTML = `<div class="console-element">
-                            <div class="only-text help-msg">
-                                <hr>
-                                ${helpHTMLs.join("<br><br>")}
-                            </div>
-                        </div>`;
-        });
-        
-        function searchCommands(query, limit) {
-            let results = {};
-
-            for (const [name, detail] of Object.entries(commandsInfo)) {
-                if (name.startsWith(query)) {
-                    results[name] = detail.parsedArgs;
-                    if (Object.keys(results).length == limit) break;
-                }
-            }
-
-            return results;
-        }
-
-        function makeCommandResultElement(response) {
-            return `<div class="console-element">
-                        <hr>
-                        <div class="original-command math">
-                            <span class="command-name">${response.commandName}</span> ${response.parsedArgs}
-                        </div>
-                        <span class="command-result math">${response.commandResult}</span>
-                    </div>`;
-        }
-
-        function makeEvalResultElement(response) {
-            return `<div class="console-element">
-                        <hr>
-                        <div class="original-expr math">${response.originalExpr}</div>
-                        <span class="command-result math">${response.result}</span>
-                    </div>`
-        }
-
-        function makeAutocompleteItems(searchResults) {
-            let result = "";
-            for (const [name, parsedArgs] of Object.entries(searchResults)) {
-                result = `<div class="ac-suggestion-item" command-name="${name}">${name} 
-                    <span class="ac-args">${parsedArgs}</span></div>` + result;
-            }
-            return result;
-        }
-
-        function updateAutocomplete(commandName) {
-            let searchResults = searchCommands(commandName, 10);
-            let resultsLength = Object.keys(searchResults).length;
-            if (resultsLength > 0) {
-                $(".ac-suggestions").html(makeAutocompleteItems(searchResults)).show();
-                acSelectionIndex = resultsLength - 1;
-                $(".ac-suggestions").children()[acSelectionIndex].id = "ac-suggestion-item-selected";
-                updateDescription();
-            } else {
-                $(".ac-suggestions").hide();
-                $(".command-description").html("");
-                acSelectionIndex = -1;
-            }
-        }
-
-        function updateDescription() {
-            let commandName = $("#ac-suggestion-item-selected").attr("command-name");
-            $(".command-description").html(commandsInfo[commandName].description || "");
-        }
-
-        function replaceMath(input) {
-            switch (input) {
-                case "-": return "−"
-                case "*": return "×"
-                case "/": return "÷"
-                default: return input
-            }
-        }
-
-        function undoReplaceMath(input) {
-            switch (input) {
-                case "−": return "-"
-                case "×": return "*"
-                case "÷": return "/"
-                default: return input
-            }
-        }
-
-        function addCursor(jquery) {
-            /* Adds a cursor to the end of a ci <span>. */
-
-            let children = jquery.children();
-
-            if (!children.last().hasClass("ci-cursor")) {
-                jquery.append(CI_CURSOR).addClass("ci-has-cursor");
-            }
-        }
-
-        function removeCursor(jquery) {
-            /* Removes a cursor from a ci <span>. */
-            
-            let children = jquery.children();
-
-            if (children.last().hasClass("ci-cursor")) {
-                children.last().remove();
-                jquery.removeClass("ci-has-cursor");
-            }
-        }
-
-        function getText(jquery) {
-            /* Gets the text and not the children elements of a jquery. */
-
-            return jquery[0].childNodes[0] ? jquery[0].childNodes[0].nodeValue : "";
-        }
-
-        function commandInputToString(jquery) {
-            /*
-            Gets the content of command-input and parse it to pass 
-            to the backend to be processed.
-
-            `jquery`:
-                the command-input or a child element to be parsed to 
-                string recursively.
-            */
-
-            let result = "";
-
-            jquery.children().each(function() {
-                let child = $(this);
-                if (
-                    child.hasClass("ci-digit") ||
-                    child.hasClass("ci-letter")
-                ) result += getText(child);
-                else if (
-                    child.hasClass("ci-binary-op") ||
-                    child.hasClass("ci-unary-op")
-                ) result += undoReplaceMath(getText(child));
-                else if (child.hasClass("ci-space")) result += " ";
-                else if (child.hasClass("ci-comma")) result += ",";
-                else if (child.hasClass("ci-superscript"))
-                    result += `**(${commandInputToString(child)})`;
-            });
-
-            return result;
-        }
-
-        function commandNameToCommandInput(commandName) {
-            let html = `<span class="ci-root-cursor"></span>`;
-            for (const c of commandName) {
-                html += `<span class="ci-clickable ci-letter">${c}</span>`;
-            }
-            html += `<span class="ci-clickable ci-space ci-has-cursor">&ensp;${CI_CURSOR}</span>`;
-            return html;
-        }
-
-        function parseCommandInputText(text) {
-            /* Takes the parsed string of the command input and convert it to an object. */
-
-            if (text.includes(" ")) {
-                let [commandName, rawArgs] = text.split(" ");
-                let args = rawArgs.split(",")
-
-                return {commandName: commandName, arguments: args};
-            } else return {expr: text};
-        }
-
-        // Show autocomplete items when autofocused/loaded
-        updateAutocomplete("");
-
-        $(".ac-suggestions").on("click", ".ac-suggestion-item", e => {
-            let commandName = e.target.getAttribute("command-name");
-            $("command-input").html(commandNameToCommandInput(commandName)).attr("has-command-name", "true");
-            updateAutocomplete(commandName);
-        });
-
-        $(".command-input").focus().on("click", e => {
-            e.target.focus();
-
-            let jElem = $(e.target);
-            if (jElem.hasClass("command-input")) {
-                let mouseX = e.pageX;
-                let firstChild = jElem.children().first();
-                let lastChild = jElem.children().last();
-
-                if (mouseX < firstChild.offset().left) {
-                    removeCursor($(".ci-has-cursor"));
-                    addCursor(firstChild);
-                } else if (mouseX > lastChild.offset().left + lastChild.width()) {
-                    removeCursor($(".ci-has-cursor"));
-                    addCursor(lastChild);
-                }
-            }
-        }).on("click", ".ci-clickable", e => {
-            let jElem = $(e.target);
-            if (jElem.hasClass("ci-clickable")) {
-                removeCursor($(".ci-has-cursor"));
-
-                let mouseX = e.pageX - jElem.offset().left;
-                let elemWidth = jElem.width();
-                if (mouseX < elemWidth / 2) addCursor(jElem.prev());
-                else addCursor(jElem);
-            }
-        }).on("keydown", e => {
-            let selector = $(".command-input");
-            let cursorSelector = $(".ci-has-cursor");
-
-            if (e.key.length === 1 && !e.ctrlKey) {
-                // math expressions
-                if (NUM_CHARS.includes(e.key)) { // Single digit
-                    if (!cursorSelector.hasClass("ci-letter")) {
-                        removeCursor(cursorSelector);
-                        cursorSelector.after(
-                            `<span class="ci-clickable ci-digit ci-has-cursor">${e.key}${CI_CURSOR}</span>`
-                        );
-                    }
-                } else if (OPERATORS.includes(e.key)) { // Binary and Unary operators
-                    removeCursor(cursorSelector);
-
-                    // the current + or - sign is an unary operator
-                    if ((e.key === "+" || e.key === "-") &&
-                        (CONVERTED_OPERATORS.includes(getText(cursorSelector))
-                        || getText(cursorSelector) === ""))
-                        cursorSelector.after(
-                            `<span class="ci-clickable ci-unary-op ci-has-cursor">${replaceMath(e.key)}${CI_CURSOR}</span>`
-                        );
-                    else {
-                        cursorSelector.after(
-                            `<span class="ci-clickable ci-binary-op ci-has-cursor">${replaceMath(e.key)}${CI_CURSOR}</span>`
-                        );
-                    }
-                } else if (e.key === "^" && (NUM_CHARS + "()").includes(getText(cursorSelector))) { // Exponent
-                    removeCursor(cursorSelector);
-                    cursorSelector.after(
-                        `<span class="ci-superscript"><span class="ci-section-root-cursor ci-has-cursor">${CI_CURSOR}</span></span><span class="ci-end-superscript">&#8203</span>`
-                    );
-                }
-
-                // commands
-                else if ((UPPER_ALPHA + LOWER_ALPHA + "_").includes(e.key)) {
-                    removeCursor(cursorSelector);
-                    cursorSelector.after(
-                        `<span class="ci-clickable ci-letter ci-has-cursor">${e.key}${CI_CURSOR}</span>`
-                    );
-
-                    updateAutocomplete(commandInputToString(selector));
-                } else if (e.key === " ") {
-                    if ( // inputting command name
-                        selector.children().last().hasClass("ci-letter") &&
-                        cursorSelector.hasClass("ci-letter") &&
-                        !selector.attr("has-command-name")
-                    ) {
-                        removeCursor(cursorSelector);
-                        cursorSelector.after(
-                            `<span class="ci-clickable ci-space ci-has-cursor">&ensp;${CI_CURSOR}</span>`
-                        );
-                        selector.attr("has-command-name", "true");
-                    }
-                } else if (e.key === ",") {
-                    if(
-                        selector.attr("has-command-name") &&
-                        !cursorSelector.hasClass("ci-space") &&
-                        !cursorSelector.hasClass("ci-comma") &&
-                        !cursorSelector.hasClass("ci-letter") &&
-                        !cursorSelector.next().hasClass("ci-space") &&
-                        !cursorSelector.next().hasClass("ci-comma") &&
-                        !cursorSelector.next().hasClass("ci-letter")
-                    ) {
-                        removeCursor(cursorSelector);
-                        cursorSelector.after(
-                            `<span class="ci-clickable ci-comma ci-has-cursor">,&ensp;${CI_CURSOR}</span>`
-                        );
-                    }
-                }
-            } else if (e.key === "Backspace") {
-                // cursor is not at the very beginning of the input
-                if (!cursorSelector.hasClass("ci-root-cursor")) {
-                    // cursor was at the beginning of a superscript
-                    if (cursorSelector.hasClass("ci-section-root-cursor")) {
-                        // move cursor outside of the superscript and add cursor
-                        addCursor(cursorSelector.parent().prev());
-                        cursorSelector.parent().remove();
-                    } else if (cursorSelector.hasClass("ci-space")) {
-                        selector.attr("has-command-name", "");
-                        addCursor(cursorSelector.prev());
-                    } else if (cursorSelector.prev().hasClass("ci-superscript")) {
-                        addCursor(cursorSelector.prev().children().last());
-                    } else addCursor(cursorSelector.prev());
-
-                    cursorSelector.remove();
-
-                    updateAutocomplete(commandInputToString(selector));
-                }
-            } else if (e.key === "Enter") {
-                let commandString = commandInputToString(selector);
-                
-                function afterRequest() {
-                    commandHistory.push(selector.html());
-
-                    historyIndex = 0;
-                    selector.html(DEFAULT_COMMAND_INPUT).attr("has-command-name", "");;
-
-                    $(".ac-suggestions").html("").hide();
-                    $(".command-description").html("");
-                    $(".loading-indicator").hide();
-
-                    updateAutocomplete("");
-                }
-
-                if (commandString.length !== 0 && $(".loading-indicator").is(":hidden")) {
-                    $(".loading-indicator").show();
-
-                    let result = parseCommandInputText(commandString);
-
-                    if (result.expr !== undefined) {
-                        let exprData = JSON.stringify(result);
-
-                        $.post({
-                            url: "/eval",
-                            data: exprData,
-                            contentType: "application/json;"
-                        }).done(response => {
-                            $(".console-container").prepend(makeEvalResultElement(response));
-                            afterRequest();
-                        });
-                    } else {
-                        let cmdData = JSON.stringify(result);
-
-                        $.post({
-                            url: "/invoke",
-                            data: cmdData,
-                            contentType: "application/json;"
-                        }).done(response => {
-                            $(".console-container").prepend(makeCommandResultElement(response));
-                            afterRequest();
-                        });
-                    }
-                }
-            } else if (e.key === "ArrowUp" && e.ctrlKey) {
-                if (commandHistory.length > 0 && commandHistory.length + historyIndex - 1 >= 0) {
-                    historyIndex--;
-                    selector.html(commandHistory[commandHistory.length + historyIndex]);
-                }
-            } else if (e.key === "ArrowDown" && e.ctrlKey) {
-                if (commandHistory.length > 0 && commandHistory.length + historyIndex + 1 < commandHistory.length) {
-                    historyIndex++;
-                    selector.html(commandHistory[commandHistory.length + historyIndex]);
-                }
-            } else if (e.key === "ArrowLeft") {
-                let prev = cursorSelector.prev();
-                if (prev.length) {
-                    if (prev.hasClass("ci-superscript")) addCursor(prev.children().last());
-                    else addCursor(prev);
-                    removeCursor(cursorSelector);
-                } else if (cursorSelector.hasClass("ci-section-root-cursor")) {
-                    addCursor(cursorSelector.parent().prev());
-                    removeCursor(cursorSelector);
-                }
-            } else if (e.key === "ArrowRight") {
-                let next = cursorSelector.next();
-                if (next.length) {
-                    if (next.hasClass("ci-superscript")) addCursor(next.children().first());
-                    else addCursor(next);
-                    removeCursor(cursorSelector);
-                } else if (cursorSelector.parent().hasClass("ci-superscript")) { // cursorSelector is the last child of a ci-superscript
-                    let parentNext = cursorSelector.parent().next();
-                    if (parentNext.length) {
-                        addCursor(parentNext);
-                        removeCursor(cursorSelector);
-                    }
-                }
-            } else if (e.key === "Tab" && acSelectionIndex !== -1) {
-                e.preventDefault();
-
-                let children = $(".ac-suggestions").children();
-                let commandName = children[acSelectionIndex].getAttribute("command-name");
-
-                removeCursor(cursorSelector);
-                selector.html(commandNameToCommandInput(commandName)).attr("has-command-name", "true");
-
-                updateAutocomplete(commandName);
-            } else if (e.key == "ArrowUp" && acSelectionIndex !== -1) {
-                let children = $(".ac-suggestions").children();
-                children[acSelectionIndex].removeAttribute("id");
-
-                acSelectionIndex--;
-                if (acSelectionIndex < 0) acSelectionIndex = children.length - 1;
-                children[acSelectionIndex].id = "ac-suggestion-item-selected";
-                updateDescription();
-            } else if (e.key == "ArrowDown" && acSelectionIndex !== -1) {
-                let children = $(".ac-suggestions").children();
-                children[acSelectionIndex].removeAttribute("id");
-
-                acSelectionIndex++;
-                if (acSelectionIndex >= children.length) acSelectionIndex = 0;
-                children[acSelectionIndex].id = "ac-suggestion-item-selected";
-                updateDescription();
-            }
-        });
-    })();
-</script>
+<script type="module" src="{{ url_for('static', filename='js/console.js') }}"></script>
 {% endblock %}

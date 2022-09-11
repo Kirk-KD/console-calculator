@@ -1,0 +1,144 @@
+@media (max-width: 1000px) {
+    * {
+        touch-action: manipulation; /* disable double tap zoom */
+    }
+
+    body, html {
+        height: 100%;
+        min-height: 100%;
+        max-height: 100%;
+        overflow: hidden;
+    }
+
+    .ac-suggestions {
+        display: none !important;
+    }
+
+    .main-container {
+        justify-content: end;
+        margin-top: 0;
+    }
+
+    .console-container {
+        width: 100vw;
+        flex-grow: 1;
+        border: none;
+    }
+
+    .console-container .console-element .only-text {
+        font-size: 1.5rem;
+    }
+
+    .console-container .console-element .only-text .small-header {
+        margin-top: 36px;
+        font-size: 3rem;
+    }
+
+    .console-container .console-element .original-command {
+        font-size: 28px;
+    }
+    
+    .console-container .console-element .original-expr {
+        font-size: 28px;
+    }
+
+    .console-container .console-element .command-result {
+        font-size: 46px;
+    }
+
+    .command-input-container {
+        width: 100vw;
+        height: 100px;
+    }
+
+    .command-input-container .command-input {
+        border-radius: 0;
+        font-size: 46px;
+    }
+
+    .ci-superscript {
+        position: relative;
+        top: -9px;
+        font-size: 24px;
+    }
+
+    .command-description {
+        display: none; /* temp, gonna fine somewhere else to put this */
+        font-size: calc(18px + 0.4vh);
+    }
+
+    footer {
+        display: none; /* temp */
+    }
+
+    /* custom keyboard */
+
+    .keyboard-container {
+        display: block;
+        width: 100vw;
+        /* height: 25vh; */
+        border: 2px solid rgba(var(--default-border-color), 1);
+        border-top: none;
+        list-style: none;
+    }
+
+    .keyboard {
+        padding-top: 20px;
+        padding-bottom: 20px;
+    }
+
+    .keyboard .keys-row {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+
+    .keyboard .keys-row .key {
+        height: 80px;
+        margin: 5px;
+        border: 2px solid rgba(var(--default-border-color), 1);
+        border-radius: 13px;
+
+        font-size: 1.6rem;
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        user-select: none;
+        -moz-user-select: none;
+        -khtml-user-select: none;
+        -webkit-user-select: none;
+        -o-user-select: none;
+    }
+
+    .keyboard-math {
+        display: none;
+    }
+
+    .keyboard-alpha .keys-row .key {
+        width: 8.8%;
+    }
+
+    .keyboard-alpha .keys-row .key-space {
+        width: 38.5%;
+    }
+
+    .keyboard-math .keys-row .key {
+        width: 9%;
+    }
+
+    .keyboard-math .keys-row .key-spacing {
+        width: 4.5%;
+    }
+
+    .keyboard-math .keys-row .key-backspace, .keyboard-math .keys-row .key-enter {
+        width: calc(18% + 10px);
+    }
+
+    /* end custom keyboard */
+
+    .switch-theme {
+        display: none; /* temp */
+    }
+}
